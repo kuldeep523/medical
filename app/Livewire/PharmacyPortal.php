@@ -23,6 +23,10 @@ class PharmacyPortal extends Component
     public $power_mg;
     public $units_per_strip = 1;
     public $brand_name;
+<<<<<<< HEAD
+=======
+    public $expiry_date;
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     public $reorder_point = 10;
     public $location_section;
     public $location_column;
@@ -33,6 +37,10 @@ class PharmacyPortal extends Component
     public $batch_quantity;
     public $batch_purchase_price;
     public $batch_sales_price;
+<<<<<<< HEAD
+=======
+
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     // Stock-In inputs
     public $selectedMedicineId;
     public $stockInBatchNo;
@@ -69,7 +77,11 @@ class PharmacyPortal extends Component
         if ($view === 'create') {
             $this->reset([
                 'medId', 'name', 'image', 'rx_salt', 'purpose', 'power_mg',
+<<<<<<< HEAD
                 'units_per_strip', 'brand_name', 'location_section', 'location_column',
+=======
+                'units_per_strip', 'brand_name', 'expiry_date', 'location_section', 'location_column',
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
             ]);
             $this->reorder_point = 10;
             $this->units_per_strip = 1;

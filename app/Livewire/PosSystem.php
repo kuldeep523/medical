@@ -33,6 +33,7 @@ class PosSystem extends Component
     public $order_type      = 'Walk-in';
     public $bill_tag        = '';
 
+<<<<<<< HEAD
     public $patient_id      = '';
     public $patient_name    = '';
     public $patient_address = '';
@@ -40,6 +41,8 @@ class PosSystem extends Component
     public $doctor_name     = '';
     public $doctor_number   = '';
 
+=======
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     // Daily tracking
     public $dailyRevenue = 0;
     public $dailyCost    = 0;
@@ -102,6 +105,7 @@ class PosSystem extends Component
         }])->where('store_id', auth()->user()->store_id)->findOrFail($id);
 
         $this->selectedBatch  = $this->selectedMedicine->batches->first();
+<<<<<<< HEAD
         
         if (!$this->selectedBatch) {
             session()->flash('error', 'Selected medicine has no active batch.');
@@ -112,6 +116,13 @@ class PosSystem extends Component
         $this->inputPrice     = $this->selectedBatch->sales_price;
 
         $this->addToCart();
+=======
+        $this->inputQuantity  = 1;
+        $this->inputPrice     = $this->selectedBatch ? $this->selectedBatch->sales_price : 0;
+
+        $this->searchQuery   = '';
+        $this->searchResults = [];
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     }
 
     // ─────────────────────────────────────────────
@@ -120,6 +131,10 @@ class PosSystem extends Component
     public function addToCart()
     {
         if (!$this->selectedMedicine || !$this->selectedBatch) {
+<<<<<<< HEAD
+=======
+            session()->flash('error', 'Please search and select a medicine first.');
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
             return;
         }
 
@@ -128,6 +143,7 @@ class PosSystem extends Component
             'inputPrice'    => 'required|numeric|min:0',
         ]);
 
+<<<<<<< HEAD
         $unitsPerStrip = max(1, $this->selectedMedicine->units_per_strip ?? 10);
 
         // Check if item already exists in cart (same medicine and batch)
@@ -176,6 +192,30 @@ class PosSystem extends Component
                 'total'          => $total,
             ];
         }
+=======
+        $total = round($this->inputPrice * $this->inputQuantity, 2);
+
+        $unitPrice = $this->selectedMedicine->units_per_strip > 1
+            ? ($this->inputPrice / $this->selectedMedicine->units_per_strip)
+            : $this->inputPrice;
+
+        $unitPurchasePrice = $this->selectedMedicine->units_per_strip > 1
+            ? ($this->selectedBatch->purchase_price / $this->selectedMedicine->units_per_strip)
+            : $this->selectedBatch->purchase_price;
+
+        $this->cart[] = [
+            'medicine_id'    => $this->selectedMedicine->id,
+            'name'           => $this->selectedMedicine->name,
+            'power'          => $this->selectedMedicine->power_mg,
+            'batch_no'       => $this->selectedBatch->batch_no,
+            'batch_id'       => $this->selectedBatch->id,
+            'quantity'       => $this->inputQuantity,
+            'price'          => $this->inputPrice,
+            'unit_price'     => $unitPrice,
+            'purchase_price' => $unitPurchasePrice,
+            'total'          => $total,
+        ];
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 
         $this->calculateGrandTotal();
 
@@ -185,8 +225,11 @@ class PosSystem extends Component
         $this->inputPrice       = 0;
         $this->searchQuery      = '';
         $this->searchResults    = [];
+<<<<<<< HEAD
 
         $this->dispatch('focus-search');
+=======
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     }
 
     public function removeFromCart($index)
@@ -201,6 +244,7 @@ class PosSystem extends Component
         $this->grandTotal = array_sum(array_column($this->cart, 'total'));
     }
 
+<<<<<<< HEAD
     public function updatedCart($value, $key)
     {
         // $key is like "0.strips" or "0.tablets" or "0.price"
@@ -237,6 +281,8 @@ class PosSystem extends Component
         }
     }
 
+=======
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     // ─────────────────────────────────────────────
     // CHECKOUT
     // ─────────────────────────────────────────────
@@ -258,12 +304,15 @@ class PosSystem extends Component
             'order_type'      => $this->order_type,
             'dispatch_status' => $this->order_type === 'Delivery' ? 'Pending' : 'Delivered',
             'bill_tag'        => $this->bill_tag,
+<<<<<<< HEAD
             'patient_id'      => $this->patient_id,
             'patient_name'    => $this->patient_name,
             'patient_address' => $this->patient_address,
             'patient_reg_no'  => $this->patient_reg_no,
             'doctor_name'     => $this->doctor_name,
             'doctor_number'   => $this->doctor_number,
+=======
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
         ]);
 
         foreach ($this->cart as $item) {
@@ -305,10 +354,14 @@ class PosSystem extends Component
     {
         $this->invoiceMode = false;
         $this->lastSale    = null;
+<<<<<<< HEAD
         $this->reset([
             'customer_name', 'customer_phone', 'payment_method', 'amount_paid', 'order_type', 'bill_tag',
             'patient_id', 'patient_name', 'patient_address', 'patient_reg_no', 'doctor_name', 'doctor_number'
         ]);
+=======
+        $this->reset(['customer_name', 'customer_phone', 'payment_method', 'amount_paid', 'order_type', 'bill_tag']);
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     }
 
     public function render()

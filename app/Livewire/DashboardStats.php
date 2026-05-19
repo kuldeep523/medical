@@ -5,11 +5,14 @@ namespace App\Livewire;
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
 use App\Models\Sale;
+<<<<<<< HEAD
 use App\Models\Purchase;
 use App\Models\Expense;
 use App\Models\Supplier;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+=======
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 use Livewire\Component;
 
 class DashboardStats extends Component
@@ -17,6 +20,7 @@ class DashboardStats extends Component
     public function render()
     {
         $storeId = auth()->user()->store_id;
+<<<<<<< HEAD
         $today   = Carbon::today();
 
         // ── Today's Sales ─────────────────────────────────────
@@ -27,12 +31,20 @@ class DashboardStats extends Component
 
         $revenue = $todaySales->sum('total_amount');
 
+=======
+
+        // Sales Data
+        $todaySales = Sale::with('items')->whereDate('created_at', today())->where('store_id', $storeId)->get();
+        $revenue = $todaySales->sum('total_amount');
+        
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
         $cost = 0;
         foreach ($todaySales as $sale) {
             foreach ($sale->items as $item) {
                 $cost += ($item->purchase_price * $item->quantity);
             }
         }
+<<<<<<< HEAD
         $grossProfit   = $revenue - $cost;
         $todayExpenses = Expense::whereDate('expense_date', $today)->sum('amount');
         $netProfit     = $grossProfit - $todayExpenses;
@@ -146,5 +158,26 @@ class DashboardStats extends Component
             'chartLabels', 'chartRevenue', 'chartProfit',
             'fastMoving', 'recentSales', 'suppliers'
         ));
+=======
+        $profit = $revenue - $cost;
+
+        // Inventory Data
+        $lowStockCount = Medicine::where('store_id', $storeId)->get()->filter(function ($m) {
+            $refBatch = $m->batches->first();
+            return $refBatch && $m->total_stock <= $refBatch->reorder_point;
+        })->count();
+
+        $expiringSoonCount = MedicineBatch::where('store_id', $storeId)
+            ->whereBetween('expiry_date', [now(), now()->addDays(90)])
+            ->count();
+
+        return view('livewire.dashboard-stats', [
+            'revenue' => $revenue,
+            'profit' => $profit,
+            'lowStockCount' => $lowStockCount,
+            'expiringSoonCount' => $expiringSoonCount,
+            'transactionCount' => $todaySales->count()
+        ]);
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     }
 }

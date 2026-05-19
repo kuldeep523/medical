@@ -25,7 +25,11 @@
             if (btn) btn.click();
         }
      }"
+<<<<<<< HEAD
      @keydown.window.escape="if ($wire.invoiceMode) { $wire.newSale(); } else { exitFs(); }">
+=======
+     @keydown.window.escape="exitFs()">
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 
     <!-- ════════════════════════════════════════════════
          POS BOX  —  CSS fullscreen, no browser API
@@ -52,6 +56,7 @@
 
         <!-- Info Section -->
         <div class="flex-shrink-0 border-bottom" style="background:#f0f4f5;font-size:11px;">
+<<<<<<< HEAD
             <!-- Row 1: Patient Name, Doctor Name, Bill Number -->
             <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
                 <div class="col-4 d-flex align-items-center">
@@ -121,6 +126,42 @@
                 <div class="col-4 d-flex align-items-center justify-content-end pe-2">
                     <span class="lbl">Date:</span>
                     <span class="fw-bold ms-1 text-teal">{{ now()->format('d-m-Y') }}</span>
+=======
+            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
+                <div class="col-4 d-flex align-items-center">
+                    <span class="lbl" style="width:85px;">Party Name:</span>
+                    <input type="text" wire:model="customer_name"
+                           class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold"
+                           style="font-size:11px;" placeholder="CASH">
+                </div>
+                <div class="col-4 d-flex align-items-center">
+                    <span class="lbl" style="width:40px;">Bill:</span>
+                    <span class="fw-bold">A000001</span>
+                </div>
+                <div class="col-4 d-flex align-items-center justify-content-end pe-2">
+                    <span class="lbl">Date :</span>
+                    <span class="fw-bold ms-1">{{ now()->format('d-m-Y') }}</span>
+                </div>
+            </div>
+            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
+                <div class="col-4 d-flex align-items-center">
+                    <span class="lbl" style="width:85px;">Patient F2:</span>
+                    <input type="text" class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;">
+                </div>
+                <div class="col-4 d-flex align-items-center">
+                    <span class="lbl" style="width:40px;">Name:</span>
+                    <input type="text" class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;">
+                </div>
+                <div class="col-4 d-flex align-items-center justify-content-end pe-2">
+                    <span class="lbl">Address:</span>
+                    <input type="text" class="form-control form-control-sm border-0 bg-transparent p-0 text-end" style="font-size:11px;width:150px;">
+                </div>
+            </div>
+            <div class="row g-0 p-1">
+                <div class="col-4 d-flex align-items-center">
+                    <span class="lbl" style="width:85px;">Reg.No.:</span>
+                    <input type="text" class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;">
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
                 </div>
             </div>
         </div>
@@ -147,6 +188,7 @@
                             <td class="col-4 text-start ps-2 fw-bold border-end border-bottom">{{ $item['name'] }}</td>
                             <td class="col-1 border-end border-bottom">{{ $item['units_per_strip'] ?? '—' }}s</td>
                             <td class="col-1 border-end border-bottom">{{ $item['batch_no'] }}</td>
+<<<<<<< HEAD
                             <td class="col-1 border-end border-bottom p-0">
                                 <input type="number" 
                                        wire:model.live="cart.{{ $ci }}.strips" 
@@ -174,6 +216,12 @@
                                     ×
                                 </button>
                             </td>
+=======
+                            <td class="col-1 border-end border-bottom">{{ floor($item['quantity'] / max(1,$item['units_per_strip'] ?? 10)) }}</td>
+                            <td class="col-1 border-end border-bottom">{{ $item['quantity'] % max(1,$item['units_per_strip'] ?? 10) }}</td>
+                            <td class="col-2 border-end border-bottom">₹{{ number_format($item['price'], 2) }}</td>
+                            <td class="col-2 border-bottom fw-bold">₹{{ number_format($item['total'], 2) }}</td>
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
                         </tr>
                     @endforeach
 
@@ -188,7 +236,10 @@
                                    style="font-size:11px;height:25px;background:transparent;"
                                    autocomplete="off"
                                    x-init="$watch('resultsCount', () => highlightedIndex = -1)"
+<<<<<<< HEAD
                                    @focus-search.window="$el.focus()"
+=======
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
                                    @keydown.arrow-down.prevent="moveHighlight('down')"
                                    @keydown.arrow-up.prevent="moveHighlight('up')"
                                    @keydown.enter.prevent="selectHighlighted()">
@@ -209,7 +260,11 @@
                                                 :style="highlightedIndex === {{ $idx }}
                                                     ? 'background:#008080;color:#fff;'
                                                     : 'background:#fff;color:#000;'"
+<<<<<<< HEAD
                                                 style="cursor:pointer ;font-size:11px;font-family:'Segoe UI',Tahoma,sans-serif;">
+=======
+                                                style="cursor:pointer;font-size:11px;font-family:'Segoe UI',Tahoma,sans-serif;">
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
                                             <div>
                                                 <div class="fw-bold">
                                                     {{ $med->name }}
@@ -241,12 +296,41 @@
                             @endif
                         </td>
 
+<<<<<<< HEAD
                         <td class="col-1 p-0 border-end border-bottom text-center text-muted" style="line-height:25px;">—</td>
                         <td class="col-1 p-0 border-end border-bottom text-center text-muted" style="line-height:25px;">—</td>
                         <td class="col-1 p-0 border-end border-bottom text-center text-muted" style="line-height:25px;">—</td>
                         <td class="col-1 p-0 border-end border-bottom text-center text-muted" style="line-height:25px;">—</td>
                         <td class="col-2 p-0 border-end border-bottom text-center text-muted" style="line-height:25px;">—</td>
                         <td class="col-2 p-0 border-bottom text-center text-muted" style="line-height:25px;">—</td>
+=======
+                        <td class="col-1 p-0 border-end border-bottom">
+                            <input type="text" class="form-control form-control-sm border-0 rounded-0 text-center" style="font-size:11px;height:25px;"
+                                   value="{{ $selectedMedicine ? $selectedMedicine->units_per_strip.'s' : '—' }}" readonly>
+                        </td>
+                        <td class="col-1 p-0 border-end border-bottom">
+                            <input type="text" class="form-control form-control-sm border-0 rounded-0 text-center fw-bold" style="font-size:11px;height:25px;"
+                                   value="{{ $selectedBatch ? $selectedBatch->batch_no : '' }}" readonly>
+                        </td>
+                        <td class="col-1 p-0 border-end border-bottom">
+                            <input type="number" wire:model="inputQuantity"
+                                   class="form-control form-control-sm border-0 rounded-0 text-center fw-bold"
+                                   style="font-size:11px;height:25px;" min="1">
+                        </td>
+                        <td class="col-1 p-0 border-end border-bottom">
+                            <input type="text" class="form-control form-control-sm border-0 rounded-0 text-center" style="font-size:11px;height:25px;" readonly>
+                        </td>
+                        <td class="col-2 p-0 border-end border-bottom">
+                            <input type="number" wire:model="inputPrice"
+                                   class="form-control form-control-sm border-0 rounded-0 text-center fw-bold"
+                                   style="font-size:11px;height:25px;" step="0.01">
+                        </td>
+                        <td class="col-2 p-0 border-bottom">
+                            <button wire:click="addToCart"
+                                    class="btn btn-sm btn-dark w-100 border-0 rounded-0 fw-bold"
+                                    style="font-size:10px;height:25px;">ADD</button>
+                        </td>
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
                     </tr>
 
                     <!-- Empty fill rows -->
@@ -367,6 +451,7 @@
         .table-bordered td, .table-bordered th { border: 1px solid #ccc !important; }
         .table > :not(caption) > * > * { padding: 0.1rem 0.3rem; }
     </style>
+<<<<<<< HEAD
 
     @if($invoiceMode && $lastSale)
         <!-- INVOICE RECEIPT DISPLAY -->
@@ -481,4 +566,6 @@
             }
         </style>
     @endif
+=======
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 </div>

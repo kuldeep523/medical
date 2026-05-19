@@ -22,11 +22,18 @@ class AccountingMis extends Component
     public $expense_desc;
     public $expense_payment_method = 'Cash';
 
+<<<<<<< HEAD
     // Sale Bill Details Modal
     public $selectedSale = null;
     public $isSaleModalOpen = false;
 
 
+=======
+    // View Record Modal
+    public $viewingRecord = null;
+    public $viewingType = null; // 'sale' or 'purchase'
+    public $isDetailsModalOpen = false;
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 
     public function mount()
     {
@@ -71,6 +78,7 @@ class AccountingMis extends Component
         session()->flash('status', 'Batch marked as returned to vendor and quantity cleared.');
     }
 
+<<<<<<< HEAD
     public function viewSaleBill($saleId)
     {
         $this->selectedSale = Sale::with(['items.medicine'])->findOrFail($saleId);
@@ -81,6 +89,43 @@ class AccountingMis extends Component
     {
         $this->selectedSale = null;
         $this->isSaleModalOpen = false;
+=======
+    public function viewDetails($id, $type)
+    {
+        $this->viewingType = $type;
+        if ($type === 'sale') {
+            $this->viewingRecord = Sale::with('items.medicine')->findOrFail($id);
+        } else {
+            $this->viewingRecord = \App\Models\Purchase::with(['supplier', 'batches.medicine'])->findOrFail($id);
+        }
+        $this->isDetailsModalOpen = true;
+    }
+
+    public function closeModal()
+    {
+        $this->isDetailsModalOpen = false;
+        $this->viewingRecord = null;
+        $this->viewingType = null;
+    }
+
+    public function clearRecordDues()
+    {
+        if (!$this->viewingRecord) return;
+
+        $record = $this->viewingRecord;
+        if ($this->viewingType === 'sale') {
+            $record->amount_paid = $record->total_amount;
+            $record->dues_cleared_at = now();
+            $record->save();
+        } else {
+            $record->paid_amount = $record->total_amount;
+            $record->dues_cleared_at = now();
+            $record->save();
+        }
+
+        session()->flash('status', 'Outstanding dues cleared successfully on ' . now()->format('d M Y, h:i A'));
+        $this->closeModal();
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     }
 
     public function render()
@@ -161,12 +206,30 @@ class AccountingMis extends Component
             $data['dayBook'] = $sales->concat($purchases)->concat($expenses)->sortByDesc('time');
         }
 
+<<<<<<< HEAD
 
+=======
+        if ($this->activeTab === 'outstanding') {
+            $data['receivables'] = Sale::whereRaw('amount_paid < total_amount')->orderByDesc('created_at')->get();
+            $data['payables'] = \App\Models\Purchase::with('supplier')
+                ->whereRaw('total_amount > paid_amount')
+                ->orderByDesc('bill_date')
+                ->get();
+        }
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 
         if ($this->activeTab === 'inventory') {
             $data['reorderAlerts'] = Medicine::get()->filter(function ($m) {
                 return $m->total_stock < $m->reorder_point;
             });
+<<<<<<< HEAD
+=======
+            $data['expiryAlerts'] = MedicineBatch::with('medicine')
+                ->where('expiry_date', '<', Carbon::today()->addDays(90))
+                ->where('quantity', '>', 0)
+                ->orderBy('expiry_date', 'asc')
+                ->get();
+>>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
         }
 
         if ($this->activeTab === 'sales_book') {
