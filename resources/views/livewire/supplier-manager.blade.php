@@ -1,0 +1,361 @@
+<div class="supplier-manager-container bg-white border border-secondary border-opacity-25" style="font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 11px;">
+
+    {{-- ── Flash Alerts ─────────────────────────────────── --}}
+    @if (session()->has('status'))
+        <div class="erp-alert erp-alert-success">
+            <i class="bi bi-check-circle-fill me-1"></i> {{ session('status') }}
+        </div>
+    @endif
+    @if (session()->has('error'))
+        <div class="erp-alert erp-alert-danger">
+            <i class="bi bi-exclamation-octagon-fill me-1"></i> {{ session('error') }}
+        </div>
+    @endif
+
+    {{-- ── Module Header ────────────────────────────────── --}}
+    <div class="d-flex justify-content-between align-items-center px-3 text-white" style="background:#004040;height:30px;">
+        <span class="fw-bold">SUPPLIER & PURCHASE MANAGER</span>
+        <div class="d-flex gap-1 h-100 py-1">
+            <button wire:click="changeTab('suppliers')" class="erp-hdr-btn {{ $activeTab === 'suppliers' ? 'active' : '' }}"><i class="bi bi-people"></i> Vendors</button>
+            <button wire:click="changeTab('purchase')"  class="erp-hdr-btn {{ $activeTab === 'purchase' ? 'active' : '' }}"><i class="bi bi-cart-plus"></i> New Bill</button>
+            <button wire:click="changeTab('history')"   class="erp-hdr-btn {{ $activeTab === 'history' ? 'active' : '' }}"><i class="bi bi-clock-history"></i> History</button>
+        </div>
+    </div>
+
+    {{-- ════════════════════════════════════════════════════ --}}
+    {{-- VIEW: SUPPLIERS / VENDORS LIST                     --}}
+    {{-- ════════════════════════════════════════════════════ --}}
+    @if($activeTab === 'suppliers')
+        <div class="row g-0">
+            {{-- Left: Vendor Form --}}
+            <div class="col-md-3 border-end p-2 bg-light">
+                <div class="fw-bold mb-2 text-primary pb-1 border-bottom">DISTRIBUTOR DETAILS</div>
+                <form wire:submit.prevent="saveSupplier" class="row g-2">
+                    <div class="col-12">
+                        <label class="erp-label">VENDOR NAME *</label>
+                        <input type="text" wire:model="vendorName" class="form-control form-control-sm rounded-0 erp-input" required />
+                    </div>
+                    <div class="col-12">
+                        <label class="erp-label">MOBILE NUMBER</label>
+                        <input type="text" wire:model="vendorMobile" class="form-control form-control-sm rounded-0 erp-input" />
+                    </div>
+                    <div class="col-12">
+                        <label class="erp-label">GSTIN</label>
+                        <input type="text" wire:model="vendorGst" class="form-control form-control-sm rounded-0 erp-input" />
+                    </div>
+                    <div class="col-12">
+                        <label class="erp-label">ADDRESS</label>
+                        <textarea wire:model="vendorAddress" class="form-control form-control-sm rounded-0 erp-input" rows="2"></textarea>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button type="submit" class="erp-btn-primary w-100">SAVE DISTRIBUTOR</button>
+                        @if($vendorId)
+                            <button type="button" wire:click="resetVendorFields" class="erp-btn-secondary w-100 mt-1">CANCEL EDIT</button>
+                        @endif
+                    </div>
+                </form>
+
+                <div class="mt-4 p-2 bg-white border border-primary border-opacity-25">
+                    <div class="text-primary fw-bold" style="font-size:10px;">TOTAL OUTSTANDING</div>
+                    <div class="fs-4 fw-bold text-danger">₹{{ number_format($suppliers->sum('current_balance'), 2) }}</div>
+                </div>
+            </div>
+
+            {{-- Right: Vendor Table --}}
+            <div class="col-md-9">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm table-hover m-0">
+                        <thead class="text-white text-center" style="background:#008080;">
+                            <tr>
+                                <th style="width:35px;">#</th>
+                                <th class="text-start ps-2">VENDOR NAME / ADDRESS</th>
+                                <th>GSTIN</th>
+                                <th>MOBILE</th>
+                                <th>OUTSTANDING</th>
+                                <th style="width:120px;">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($suppliers as $i => $s)
+                                <tr class="align-middle text-center">
+                                    <td class="text-muted">{{ $i + 1 }}</td>
+                                    <td class="text-start ps-2">
+                                        <div class="fw-bold">{{ $s->name }}</div>
+                                        <div class="text-muted" style="font-size:10px;">{{ $s->address }}</div>
+                                    </td>
+                                    <td>{{ $s->gst_number ?: '—' }}</td>
+                                    <td>{{ $s->mobile ?: '—' }}</td>
+                                    <td class="fw-bold {{ $s->current_balance > 0 ? 'text-danger' : 'text-success' }}">
+                                        ₹{{ number_format($s->current_balance, 2) }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button wire:click="changeTab('ledger', {{ $s->id }})" class="btn btn-outline-teal py-0 px-2">LEDGER</button>
+                                            <button wire:click="editSupplier({{ $s->id }})" class="btn btn-outline-dark py-0 px-2"><i class="bi bi-pencil"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    {{-- ════════════════════════════════════════════════════ --}}
+    {{-- VIEW: PURCHASE ENTRY                                --}}
+    {{-- ════════════════════════════════════════════════════ --}}
+    @elseif($activeTab === 'purchase')
+        <div class="erp-form-header">NEW PURCHASE INVOICE ENTRY</div>
+        <div class="p-2 border-bottom bg-light">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="erp-label">SUPPLIER *</label>
+                    <select wire:model="supplier_id" class="form-select form-select-sm rounded-0 erp-input" required>
+                        <option value="">— select vendor —</option>
+                        @foreach($suppliers as $s)
+                            <option value="{{ $s->id }}">{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="erp-label">BILL NUMBER *</label>
+                    <input type="text" wire:model="bill_number" class="form-control form-control-sm rounded-0 erp-input" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="erp-label">BILL DATE *</label>
+                    <input type="date" wire:model="bill_date" class="form-control form-control-sm rounded-0 erp-input" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="erp-label">BILL FILE (PDF/IMG)</label>
+                    <input type="file" wire:model="bill_file" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+            </div>
+        </div>
+
+        {{-- Entry Row --}}
+        <div class="bg-white border-bottom p-2" style="background:#fffdf0 !important;">
+            <div class="row g-1 align-items-end">
+                <div class="col-md-3">
+                    <label class="erp-label">MEDICINE *</label>
+                    <select wire:model="selectedMedId" class="form-select form-select-sm rounded-0 erp-input">
+                        <option value="">— choose —</option>
+                        @foreach($medicines as $m)
+                            <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->power_mg }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="erp-label">BATCH *</label>
+                    <input type="text" wire:model="batchNo" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+                <div class="col-md-2">
+                    <label class="erp-label">EXPIRY *</label>
+                    <input type="date" wire:model="expiryDate" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+                <div class="col-md-1">
+                    <label class="erp-label">QTY (strips)</label>
+                    <input type="number" wire:model="qty" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+                <div class="col-md-1">
+                    <label class="erp-label">P. PRICE</label>
+                    <input type="number" wire:model="pPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
+                </div>
+                <div class="col-md-1">
+                    <label class="erp-label">MRP</label>
+                    <input type="number" wire:model="sPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
+                </div>
+                <div class="col-md-1">
+                    <label class="erp-label">DIS %</label>
+                    <input type="number" wire:model="discPercent" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+                <div class="col-md-1">
+                    <label class="erp-label">GST %</label>
+                    <input type="number" wire:model="gstPercent" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+                <div class="col-md-1">
+                    <button wire:click="addItem" class="erp-btn-primary w-100" style="height:24px;padding:0;">ADD ITEM</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="min-height:200px;">
+            <table class="table table-bordered table-sm m-0">
+                <thead class="bg-light text-center">
+                    <tr>
+                        <th>ITEM DESCRIPTION</th>
+                        <th>BATCH</th>
+                        <th>EXPIRY</th>
+                        <th>QTY</th>
+                        <th>PRICE</th>
+                        <th>DIS %</th>
+                        <th>GST %</th>
+                        <th>TOTAL</th>
+                        <th style="width:40px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($purchaseItems as $idx => $item)
+                        <tr class="align-middle text-center">
+                            <td class="text-start ps-2 fw-bold">{{ $item['medicine_name'] }}</td>
+                            <td>{{ $item['batch_no'] }}</td>
+                            <td>{{ date('d-m-Y', strtotime($item['expiry_date'])) }}</td>
+                            <td>{{ $item['quantity'] }}</td>
+                            <td>₹{{ number_format($item['purchase_price'], 2) }}</td>
+                            <td>{{ $item['disc_percent'] }}%</td>
+                            <td>{{ $item['gst_percent'] }}%</td>
+                            <td class="fw-bold">₹{{ number_format($item['total'], 2) }}</td>
+                            <td>
+                                <button wire:click="removeItem({{ $idx }})" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="9" class="text-center py-5 text-muted italic">No items added to the bill yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-2 border-top bg-light mt-auto">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <div class="text-primary fw-bold" style="font-size:10px;">GRAND TOTAL</div>
+                    <div class="fs-4 fw-bold">₹{{ number_format(collect($purchaseItems)->sum('total'), 2) }}</div>
+                </div>
+                <div class="col-md-2">
+                    <label class="erp-label">PAID AMOUNT (₹)</label>
+                    <input type="number" wire:model="paid_amount" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
+                </div>
+                <div class="col-md-2">
+                    <label class="erp-label">PAYMENT MODE</label>
+                    <select wire:model="payment_mode" class="form-select form-select-sm rounded-0 erp-input">
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI / Bank</option>
+                        <option value="Credit">Credit (Full Due)</option>
+                    </select>
+                </div>
+                <div class="col-md-5 text-end">
+                    <button wire:click="savePurchase" class="erp-btn-primary" style="padding:8px 30px; font-size:12px;">FINALIZE PURCHASE BILL</button>
+                </div>
+            </div>
+        </div>
+
+    {{-- ════════════════════════════════════════════════════ --}}
+    {{-- VIEW: HISTORY                                       --}}
+    {{-- ════════════════════════════════════════════════════ --}}
+    @elseif($activeTab === 'history')
+        <div class="erp-form-header">PURCHASE BILL HISTORY</div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm table-hover m-0">
+                <thead class="text-white text-center" style="background:#008080;">
+                    <tr>
+                        <th>DATE</th>
+                        <th>BILL NUMBER</th>
+                        <th class="text-start ps-2">SUPPLIER</th>
+                        <th>BILL TOTAL</th>
+                        <th>PAID</th>
+                        <th>DUE</th>
+                        <th>MODE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($purchases as $p)
+                        <tr class="align-middle text-center">
+                            <td>{{ date('d-m-Y', strtotime($p->bill_date)) }}</td>
+                            <td class="fw-bold">{{ $p->bill_number }}</td>
+                            <td class="text-start ps-2">{{ $p->supplier->name }}</td>
+                            <td class="fw-bold">₹{{ number_format($p->total_amount, 2) }}</td>
+                            <td class="text-success">₹{{ number_format($p->paid_amount, 2) }}</td>
+                            <td class="text-danger fw-bold">₹{{ number_format($p->total_amount - $p->paid_amount, 2) }}</td>
+                            <td><span class="badge bg-light border text-dark rounded-0">{{ $p->payment_mode }}</span></td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="p-2 border-top">
+            {{ $purchases->links() }}
+        </div>
+
+    {{-- ════════════════════════════════════════════════════ --}}
+    {{-- VIEW: LEDGER                                        --}}
+    {{-- ════════════════════════════════════════════════════ --}}
+    @elseif($activeTab === 'ledger')
+        <div class="erp-form-header d-flex justify-content-between align-items-center">
+            <span>SUPPLIER ACCOUNT STATEMENT — {{ $selectedSupplier->name }}</span>
+            <span class="text-danger">CURRENT DUE: ₹{{ number_format($selectedSupplier->current_balance, 2) }}</span>
+        </div>
+        <div class="row g-0">
+            <div class="col-md-8 border-end">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm m-0">
+                        <thead class="bg-light text-center">
+                            <tr>
+                                <th>DATE</th>
+                                <th class="text-start ps-2">DESCRIPTION</th>
+                                <th class="text-end pe-2">DEBIT (+)</th>
+                                <th class="text-end pe-2">CREDIT (-)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($ledgerEntries as $entry)
+                                <tr class="text-center">
+                                    <td>{{ date('d-m-Y', strtotime($entry['date'])) }}</td>
+                                    <td class="text-start ps-2 text-muted">{{ $entry['desc'] }}</td>
+                                    <td class="text-end pe-2 fw-bold">{{ $entry['debit'] > 0 ? '₹'.number_format($entry['debit'], 2) : '—' }}</td>
+                                    <td class="text-end pe-2 fw-bold text-success">{{ $entry['credit'] > 0 ? '₹'.number_format($entry['credit'], 2) : '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-4 p-3 bg-light">
+                <div class="fw-bold mb-3 text-primary pb-1 border-bottom">RECORD NEW PAYMENT</div>
+                <form wire:submit.prevent="makePayment" class="row g-2">
+                    <div class="col-12">
+                        <label class="erp-label">PAYMENT AMOUNT (₹) *</label>
+                        <input type="number" wire:model="paymentAmount" class="form-control form-control-sm rounded-0 erp-input" step="0.01" required />
+                    </div>
+                    <div class="col-12">
+                        <label class="erp-label">PAYMENT MODE</label>
+                        <select class="form-select form-select-sm rounded-0 erp-input">
+                            <option>Cash</option>
+                            <option>Bank / Check</option>
+                            <option>UPI</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="erp-label">NOTE / REFERENCE</label>
+                        <textarea wire:model="paymentNote" class="form-control form-control-sm rounded-0 erp-input" rows="2"></textarea>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button type="submit" class="erp-btn-primary w-100">SUBMIT PAYMENT</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ── Scoped CSS ───────────────────────────────────── --}}
+    <style>
+        .erp-alert          { padding: 4px 12px; font-size: 11px; font-weight: 600; border-left: 3px solid; margin: 0; }
+        .erp-alert-success  { background: #dcfce7; color: #166534; border-color: #22c55e; }
+        .erp-alert-danger   { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+        .erp-hdr-btn        { background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 0 10px; font-size: 10px; font-weight: 700; height: 20px; cursor: pointer; transition: background .15s; margin-top: 3px; }
+        .erp-hdr-btn:hover, .erp-hdr-btn.active { background: rgba(255,255,255,.2); border-color: #fff; }
+        .erp-form-header    { background: #f1f5f9; border-bottom: 1px solid #dde; padding: 6px 12px; font-size: 10px; font-weight: 700; color: #004040; letter-spacing: .5px; text-uppercase: true; }
+        .erp-label          { display: block; font-size: 10px; font-weight: 700; color: #008080; margin-bottom: 2px; }
+        .erp-input          { border-color: rgba(0,0,0,.15) !important; font-size: 11px !important; }
+        .erp-input:focus    { border-color: #008080 !important; box-shadow: none !important; outline: none !important; }
+        .erp-btn-primary    { background: #008080; border: 0; color: #fff; padding: 4px 15px; font-size: 10px; font-weight: 700; cursor: pointer; }
+        .erp-btn-primary:hover   { background: #006666; }
+        .erp-btn-secondary  { background: transparent; border: 1px solid #666; color: #333; padding: 4px 15px; font-size: 10px; font-weight: 600; cursor: pointer; }
+        .text-primary       { color: #008080 !important; }
+        .btn-outline-teal   { color: #008080; border-color: #008080; font-size: 9px; }
+        .btn-outline-teal:hover { background: #008080; color: #fff; }
+        .table-hover tbody tr:hover { background-color: #f8fafc !important; }
+        .supplier-manager-container { box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+        select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e"); }
+    </style>
+</div>
