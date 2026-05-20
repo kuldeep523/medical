@@ -21,7 +21,6 @@ class Sale extends Model
         'order_type',
         'dispatch_status',
         'bill_tag',
-<<<<<<< HEAD
         'patient_id',
         'patient_name',
         'patient_address',
@@ -29,8 +28,6 @@ class Sale extends Model
         'doctor_name',
         'doctor_number',
         'dues_cleared_at',
-=======
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     ];
 
     protected static function booted()

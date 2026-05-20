@@ -22,18 +22,9 @@ class AccountingMis extends Component
     public $expense_desc;
     public $expense_payment_method = 'Cash';
 
-<<<<<<< HEAD
-    // Sale Bill Details Modal
-    public $selectedSale = null;
-    public $isSaleModalOpen = false;
-
-
-=======
-    // View Record Modal
-    public $viewingRecord = null;
-    public $viewingType = null; // 'sale' or 'purchase'
-    public $isDetailsModalOpen = false;
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
+    // Sale Details Modal
+    public $selectedSale       = null;
+    public $isSaleModalOpen    = false;
 
     public function mount()
     {
@@ -51,17 +42,17 @@ class AccountingMis extends Component
     public function addExpense()
     {
         $this->validate([
-            'expense_amount' => 'required|numeric|min:1',
+            'expense_amount'   => 'required|numeric|min:1',
             'expense_category' => 'required|string',
-            'expense_desc' => 'nullable|string',
+            'expense_desc'     => 'nullable|string',
         ]);
 
         Expense::create([
-            'store_id' => auth()->user()->store_id,
-            'expense_date' => $this->expense_date,
-            'category' => $this->expense_category,
-            'amount' => $this->expense_amount,
-            'description' => $this->expense_desc,
+            'store_id'       => auth()->user()->store_id,
+            'expense_date'   => $this->expense_date,
+            'category'       => $this->expense_category,
+            'amount'         => $this->expense_amount,
+            'description'    => $this->expense_desc,
             'payment_method' => $this->expense_payment_method,
         ]);
 
@@ -73,59 +64,21 @@ class AccountingMis extends Component
     {
         $batch = MedicineBatch::where('store_id', auth()->user()->store_id)->findOrFail($batchId);
         $batch->return_status = 'returned_to_vendor';
-        $batch->quantity = 0; // Returning logic
+        $batch->quantity      = 0;
         $batch->save();
-        session()->flash('status', 'Batch marked as returned to vendor and quantity cleared.');
+        session()->flash('status', 'Batch marked as returned to vendor.');
     }
 
-<<<<<<< HEAD
     public function viewSaleBill($saleId)
     {
-        $this->selectedSale = Sale::with(['items.medicine'])->findOrFail($saleId);
+        $this->selectedSale    = Sale::with(['items.medicine'])->findOrFail($saleId);
         $this->isSaleModalOpen = true;
     }
 
     public function closeSaleModal()
     {
-        $this->selectedSale = null;
+        $this->selectedSale    = null;
         $this->isSaleModalOpen = false;
-=======
-    public function viewDetails($id, $type)
-    {
-        $this->viewingType = $type;
-        if ($type === 'sale') {
-            $this->viewingRecord = Sale::with('items.medicine')->findOrFail($id);
-        } else {
-            $this->viewingRecord = \App\Models\Purchase::with(['supplier', 'batches.medicine'])->findOrFail($id);
-        }
-        $this->isDetailsModalOpen = true;
-    }
-
-    public function closeModal()
-    {
-        $this->isDetailsModalOpen = false;
-        $this->viewingRecord = null;
-        $this->viewingType = null;
-    }
-
-    public function clearRecordDues()
-    {
-        if (!$this->viewingRecord) return;
-
-        $record = $this->viewingRecord;
-        if ($this->viewingType === 'sale') {
-            $record->amount_paid = $record->total_amount;
-            $record->dues_cleared_at = now();
-            $record->save();
-        } else {
-            $record->paid_amount = $record->total_amount;
-            $record->dues_cleared_at = now();
-            $record->save();
-        }
-
-        session()->flash('status', 'Outstanding dues cleared successfully on ' . now()->format('d M Y, h:i A'));
-        $this->closeModal();
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     }
 
     public function render()
@@ -134,31 +87,31 @@ class AccountingMis extends Component
 
         if ($this->activeTab === 'mis_dashboard') {
             $today = Carbon::today();
-            $data['todaySales'] = Sale::whereDate('created_at', $today)->sum('total_amount');
-            $data['todayExpenses'] = Expense::whereDate('expense_date', $today)->sum('amount');
-            
+
             $todaySalesItems = Sale::with('items')->whereDate('created_at', $today)->get();
+            $data['todaySales']    = $todaySalesItems->sum('total_amount');
+            $data['todayExpenses'] = Expense::whereDate('expense_date', $today)->sum('amount');
+
             $cogs = 0;
             foreach ($todaySalesItems as $s) {
                 foreach ($s->items as $item) {
-                    $cogs += ($item->purchase_price * $item->quantity);
+                    $cogs += $item->purchase_price * $item->quantity;
                 }
             }
             $data['todayGrossProfit'] = $data['todaySales'] - $cogs;
-            $data['todayNetProfit'] = $data['todayGrossProfit'] - $data['todayExpenses'];
-
+            $data['todayNetProfit']   = $data['todayGrossProfit'] - $data['todayExpenses'];
             $data['pendingDeliveries'] = Sale::where('dispatch_status', 'Pending')->count();
-            
+
             $chartData = ['labels' => [], 'data' => []];
-            for($i=6; $i>=0; $i--) {
+            for ($i = 6; $i >= 0; $i--) {
                 $date = Carbon::today()->subDays($i);
                 $chartData['labels'][] = $date->format('D, d M');
-                $chartData['data'][] = Sale::whereDate('created_at', $date)->sum('total_amount');
+                $chartData['data'][]   = Sale::whereDate('created_at', $date)->sum('total_amount');
             }
             $data['chartData'] = json_encode($chartData);
-            
+
             $data['fastMoving'] = DB::table('sale_items')
-                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->join('sales',     'sale_items.sale_id',     '=', 'sales.id')
                 ->join('medicines', 'sale_items.medicine_id', '=', 'medicines.id')
                 ->where('sales.store_id', auth()->user()->store_id)
                 ->where('sales.created_at', '>=', Carbon::now()->subDays(30))
@@ -170,66 +123,34 @@ class AccountingMis extends Component
         }
 
         if ($this->activeTab === 'day_book') {
-            $sales = Sale::whereDate('created_at', Carbon::today())->get()->map(function($i) {
-                return (object)[
-                    'time' => $i->created_at,
-                    'type' => 'Sale',
-                    'particulars' => $i->customer_name ?: 'Walk-in Customer',
-                    'method' => $i->payment_method,
-                    'in' => $i->total_amount,
-                    'out' => 0
-                ];
-            });
+            $sales = Sale::whereDate('created_at', Carbon::today())->get()->map(fn($i) => (object)[
+                'time' => $i->created_at, 'type' => 'Sale',
+                'particulars' => $i->customer_name ?: 'Walk-in', 'method' => $i->payment_method,
+                'in' => $i->total_amount, 'out' => 0,
+            ]);
 
-            $purchases = MedicineBatch::whereDate('created_at', Carbon::today())->get()->map(function($i) {
-                return (object)[
-                    'time' => $i->created_at,
-                    'type' => 'Purchase',
-                    'particulars' => $i->vendor_name ?: 'Vendor',
-                    'method' => 'Bank/Cash',
-                    'in' => 0,
-                    'out' => $i->quantity * $i->purchase_price
-                ];
-            });
+            $purchases = MedicineBatch::whereDate('created_at', Carbon::today())->get()->map(fn($i) => (object)[
+                'time' => $i->created_at, 'type' => 'Purchase',
+                'particulars' => $i->vendor_name ?: 'Vendor', 'method' => 'Bank/Cash',
+                'in' => 0, 'out' => $i->quantity * $i->purchase_price,
+            ]);
 
-            $expenses = Expense::whereDate('expense_date', Carbon::today())->get()->map(function($i) {
-                return (object)[
-                    'time' => $i->created_at,
-                    'type' => 'Expense',
-                    'particulars' => $i->category . ' - ' . $i->description,
-                    'method' => $i->payment_method,
-                    'in' => 0,
-                    'out' => $i->amount
-                ];
-            });
+            $expenses = Expense::whereDate('expense_date', Carbon::today())->get()->map(fn($i) => (object)[
+                'time' => $i->created_at, 'type' => 'Expense',
+                'particulars' => $i->category.' - '.$i->description, 'method' => $i->payment_method,
+                'in' => 0, 'out' => $i->amount,
+            ]);
 
             $data['dayBook'] = $sales->concat($purchases)->concat($expenses)->sortByDesc('time');
         }
 
-<<<<<<< HEAD
-
-=======
-        if ($this->activeTab === 'outstanding') {
-            $data['receivables'] = Sale::whereRaw('amount_paid < total_amount')->orderByDesc('created_at')->get();
-            $data['payables'] = \App\Models\Purchase::with('supplier')
-                ->whereRaw('total_amount > paid_amount')
-                ->orderByDesc('bill_date')
-                ->get();
-        }
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
-
         if ($this->activeTab === 'inventory') {
-            $data['reorderAlerts'] = Medicine::get()->filter(function ($m) {
-                return $m->total_stock < $m->reorder_point;
-            });
-<<<<<<< HEAD
-=======
-            $data['expiryAlerts'] = MedicineBatch::with('medicine')
+            $data['reorderAlerts'] = Medicine::get()->filter(fn($m) => $m->total_stock < $m->reorder_point);
+            $data['expiryAlerts']  = MedicineBatch::with('medicine')
                 ->where('expiry_date', '<', Carbon::today()->addDays(90))
                 ->where('quantity', '>', 0)
-                ->orderBy('expiry_date', 'asc')
+                ->orderBy('expiry_date')
                 ->get();
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
         }
 
         if ($this->activeTab === 'sales_book') {

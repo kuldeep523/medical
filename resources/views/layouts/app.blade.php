@@ -44,11 +44,8 @@
             <button class="erp-action-btn purple">SUPPORT TICKET</button>
             <button class="erp-action-btn orange">REMOTE SUPPORT</button>
             <button class="erp-action-btn cyan">JOIN WEBINAR</button>
-<<<<<<< HEAD
+
             <a href="{{ route('dashboard') }}" class="erp-action-btn green"><i class="bi bi-grid-fill"></i> Dashboard</a>
-=======
-            <button class="erp-action-btn green"><i class="bi bi-grid-fill"></i> Dashboard</button>
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
             <button class="erp-action-btn navy">SEARCH MENU</button>
         </div>
     </div>
@@ -60,22 +57,12 @@
         <div class="sidebar">
             <a href="{{ route('pos.index') }}" class="sidebar-btn {{ request()->routeIs('pos.index') ? 'active' : '' }}">Sale</a>
             <a href="{{ route('suppliers.index') }}" class="sidebar-btn {{ request()->routeIs('suppliers.index') ? 'active' : '' }}">Purchase Invoice</a>
-<<<<<<< HEAD
             <a href="{{ route('sr-expiry.index') }}" class="sidebar-btn {{ request()->routeIs('sr-expiry.index') ? 'active' : '' }}">S/R Expiry</a>
             <a href="#" class="sidebar-btn">P/R Expiry</a>
             <a href="{{ route('receipts.index') }}" class="sidebar-btn {{ request()->routeIs('receipts.index') ? 'active' : '' }}">Receipt</a>
             <a href="{{ route('payments.index') }}" class="sidebar-btn {{ request()->routeIs('payments.index') ? 'active' : '' }}">Payment</a>
             <a href="{{ route('accounting.index', ['tab' => 'day_book']) }}" class="sidebar-btn {{ request()->query('tab') === 'day_book' ? 'active' : '' }}">Cash & Bank Book</a>
             <a href="{{ route('ledger.index') }}" class="sidebar-btn {{ request()->routeIs('ledger.index') ? 'active' : '' }}">Ledger A/c</a>
-=======
-            <a href="#" class="sidebar-btn">S/R Expiry</a>
-            <a href="#" class="sidebar-btn">P/R Expiry</a>
-            <a href="{{ route('accounting.index', ['tab' => 'outstanding']) }}" class="sidebar-btn {{ request()->query('tab') === 'outstanding' ? 'active' : '' }}">Receipt</a>
-            <a href="{{ route('accounting.index', ['tab' => 'outstanding']) }}" class="sidebar-btn {{ request()->query('tab') === 'outstanding' ? 'active' : '' }}">Payment</a>
-            <a href="{{ route('accounting.index', ['tab' => 'day_book']) }}" class="sidebar-btn {{ request()->query('tab') === 'day_book' ? 'active' : '' }}">Cash & Bank Book</a>
-            <a href="{{ route('accounting.index', ['tab' => 'day_book']) }}" class="sidebar-btn">Ledger A/c</a>
-            <a href="{{ route('accounting.index', ['tab' => 'outstanding']) }}" class="sidebar-btn {{ request()->query('tab') === 'outstanding' ? 'active' : '' }}">Outstanding</a>
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
             <a href="{{ route('pharmacy.index') }}" class="sidebar-btn">Stock Status</a>
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Stock & Sales Analysis</a>
             <a href="{{ route('accounting.index', ['tab' => 'inventory']) }}" class="sidebar-btn {{ request()->query('tab') === 'inventory' ? 'active' : '' }}">Re-Order</a>
@@ -142,7 +129,6 @@
 
     <!-- Keyboard Footer -->
     <div class="footer-bar">
-<<<<<<< HEAD
         <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:10px; font-weight:600;">
             <span style="color:#6ee7b7;"><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">F1</kbd> Help</span>
             <span><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">F2</kbd> Search</span>
@@ -163,14 +149,6 @@
             </button>
             <button class="footer-btn">Manual</button>
             <button class="footer-btn">Graph Tool</button>
-=======
-        <div>F1-Company Ctrl+I-Item +L-Party +U-User +F1-Directory +F10-Appointment +F11-Printer</div>
-        <div class="d-flex">
-            <button class="footer-btn">Run SERVER.EXE</button>
-            <button class="footer-btn">Manual</button>
-            <button class="footer-btn">Graph Tool</button>
-            <button class="footer-btn">Upgradation</button>
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
         </div>
     </div>
 
@@ -487,7 +465,5 @@
 })();
 </script>
 
-=======
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 </body>
 </html>

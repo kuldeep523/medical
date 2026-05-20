@@ -41,7 +41,6 @@ Route::middleware([
         return view('suppliers.index');
     })->name('suppliers.index');
 
-<<<<<<< HEAD
     // S/R Expiry
     Route::get('/sr-expiry', function () {
         return view('sr-expiry.index');
@@ -62,8 +61,6 @@ Route::middleware([
         return view('ledger.index');
     })->name('ledger.index');
 
-=======
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     // Admin Restricted Routes
     Route::middleware(['admin'])->group(function () {
         Route::get('/admin/dashboard', function () {
