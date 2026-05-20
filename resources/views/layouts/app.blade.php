@@ -57,6 +57,7 @@
         <div class="sidebar">
             <a href="{{ route('pos.index') }}" class="sidebar-btn {{ request()->routeIs('pos.index') ? 'active' : '' }}">Sale</a>
             <a href="{{ route('suppliers.index') }}" class="sidebar-btn {{ request()->routeIs('suppliers.index') ? 'active' : '' }}">Purchase Invoice</a>
+            <a href="{{ route('doctors.index') }}" class="sidebar-btn {{ request()->routeIs('doctors.index') ? 'active' : '' }}">Doctor Master</a>
             <a href="{{ route('sr-expiry.index') }}" class="sidebar-btn {{ request()->routeIs('sr-expiry.index') ? 'active' : '' }}">S/R Expiry</a>
             <a href="#" class="sidebar-btn">P/R Expiry</a>
             <a href="{{ route('receipts.index') }}" class="sidebar-btn {{ request()->routeIs('receipts.index') ? 'active' : '' }}">Receipt</a>

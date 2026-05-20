@@ -31,6 +31,11 @@ Route::middleware([
         return view('pos.index');
     })->name('pos.index');
 
+    // Doctor Master
+    Route::get('/doctors', function () {
+        return view('doctors.index');
+    })->name('doctors.index');
+
     // Accounting & MIS
     Route::get('/accounting', function () {
         return view('accounting.index');

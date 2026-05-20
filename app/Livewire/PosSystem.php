@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use App\Models\Doctor;
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
 use App\Models\Sale;
@@ -38,7 +39,8 @@ class PosSystem extends Component
     public $patient_name    = '';
     public $patient_address = '';
     public $patient_reg_no  = '';
-    public $doctor_name     = '';
+    public $doctor_id       = null;   // FK to doctors table
+    public $doctor_name     = '';     // fallback free-text
     public $doctor_number   = '';
 
     // Daily tracking
@@ -46,9 +48,36 @@ class PosSystem extends Component
     public $dailyCost    = 0;
     public $dailyProfit  = 0;
 
+    // Doctors list for dropdown
+    public $doctors = [];
+
     public function mount(): void
     {
+        $this->loadDoctors();
         $this->calculateDailyStats();
+    }
+
+    public function loadDoctors(): void
+    {
+        $this->doctors = Doctor::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'specialization', 'phone'])
+            ->toArray();
+    }
+
+    /** Sync free-text fields when doctor_id changes */
+    public function updatedDoctorId($value): void
+    {
+        if ($value) {
+            $doc = Doctor::find($value);
+            if ($doc) {
+                $this->doctor_name   = $doc->name;
+                $this->doctor_number = $doc->phone ?? '';
+                return;
+            }
+        }
+        $this->doctor_name   = '';
+        $this->doctor_number = '';
     }
 
     // ─────────────────────────────────────────────
@@ -345,7 +374,7 @@ class PosSystem extends Component
             'customer_name', 'customer_phone', 'payment_method', 'amount_paid',
             'order_type', 'bill_tag',
             'patient_name', 'patient_address', 'patient_reg_no',
-            'doctor_name', 'doctor_number',
+            'doctor_id', 'doctor_name', 'doctor_number',
             'cart', 'grandTotal', 'gstTotal',
         ]);
     }

@@ -54,9 +54,22 @@
                     <span class="lbl" style="width:85px;">Patient Name:</span>
                     <input type="text" wire:model="patient_name" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="Patient Name">
                 </div>
-                <div class="col-4 d-flex align-items-center">
-                    <span class="lbl" style="width:85px;">Doctor Name:</span>
-                    <input type="text" wire:model="doctor_name" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="Doctor Name">
+                <div class="col-4 d-flex align-items-center gap-1">
+                    <span class="lbl" style="width:85px;flex-shrink:0;">Doctor:</span>
+                    <select wire:model.live="doctor_id"
+                            class="form-select form-select-sm border-0 bg-transparent p-0 fw-bold"
+                            style="font-size:11px;color:#008080;min-width:0;flex:1;">
+                        <option value="">— Select Doctor —</option>
+                        @foreach($doctors as $doc)
+                            <option value="{{ $doc['id'] }}">
+                                Dr. {{ $doc['name'] }}{{ $doc['specialization'] ? ' ('.$doc['specialization'].')' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <a href="{{ route('doctors.index') }}" target="_blank"
+                       title="Add new doctor"
+                       class="text-success fw-bold text-decoration-none flex-shrink-0"
+                       style="font-size:14px;line-height:1;">＋</a>
                 </div>
                 <div class="col-4 d-flex align-items-center justify-content-end pe-2">
                     <span class="lbl" style="width:50px;">Bill No:</span>
@@ -71,7 +84,10 @@
                 </div>
                 <div class="col-4 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Doctor Mob:</span>
-                    <input type="text" wire:model="doctor_number" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="Mobile">
+                    <input type="text" wire:model="doctor_number"
+                           class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold"
+                           style="font-size:11px;color:#555;"
+                           placeholder="{{ $doctor_id ? 'Auto-filled' : 'Doctor mobile' }}">
                 </div>
                 <div class="col-4 d-flex align-items-center justify-content-end pe-2">
                     <span class="lbl" style="width:90px;">Payment Mode:</span>
@@ -134,6 +150,11 @@
                 </colgroup>
                 <tbody>
                     @foreach($cart as $ci => $item)
+                        @php
+                            $taxRate   = floatval($item['tax_percent'] ?? 0);
+                            $rowTotal  = floatval($item['total'] ?? 0);
+                            $taxAmt    = $taxRate > 0 ? round($rowTotal - ($rowTotal / (1 + $taxRate / 100)), 2) : 0;
+                        @endphp
                         <tr class="align-middle" style="height:22px;">
                             <td class="text-start ps-2 fw-bold border-end border-bottom">{{ $item['name'] }}</td>
                             <td class="border-end border-bottom">{{ $item['units_per_strip'] ?? '—' }}s</td>
@@ -148,21 +169,31 @@
                                        class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
                                        style="font-size:11px;height:22px;" min="0">
                             </td>
+                            {{-- TAX % — GST slab dropdown --}}
                             <td class="border-end border-bottom p-0">
-                                <input type="number" wire:model.live="cart.{{ $ci }}.tax_percent"
-                                       class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
-                                       style="font-size:11px;height:22px;" min="0" max="100" step="0.5">
+                                <select wire:model.live="cart.{{ $ci }}.tax_percent"
+                                        class="form-select form-select-sm border-0 bg-transparent text-center p-0 fw-bold"
+                                        style="font-size:10px;height:22px;cursor:pointer;color:{{ $taxRate > 0 ? '#b45309' : '#555' }};">
+                                    <option value="0">0%</option>
+                                    <option value="5">5%</option>
+                                    <option value="12">12%</option>
+                                    <option value="18">18%</option>
+                                    <option value="28">28%</option>
+                                </select>
                             </td>
                             <td class="border-end border-bottom p-0">
                                 <input type="number" wire:model.live="cart.{{ $ci }}.price"
                                        class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
                                        style="font-size:11px;height:22px;" step="0.01" min="0">
                             </td>
-                            <td class="border-bottom fw-bold position-relative">
-                                ₹{{ number_format($item['total'], 2) }}
+                            <td class="border-bottom position-relative" style="line-height:1.2;">
+                                <span class="fw-bold" style="font-size:11px;">₹{{ number_format($rowTotal, 2) }}</span>
+                                @if($taxAmt > 0)
+                                    <br><span style="font-size:9px;color:#b45309;">GST ₹{{ number_format($taxAmt, 2) }}</span>
+                                @endif
                                 <button type="button" wire:click="removeFromCart({{ $ci }})"
-                                        class="btn btn-sm btn-link text-danger position-absolute end-0 top-50 translate-middle-y py-0 px-1 border-0"
-                                        style="font-size:13px;font-weight:bold;line-height:1;text-decoration:none;">×</button>
+                                        class="btn btn-sm btn-link text-danger position-absolute end-0 top-0 py-0 px-1 border-0"
+                                        style="font-size:13px;font-weight:bold;line-height:22px;text-decoration:none;">×</button>
                             </td>
                         </tr>
                     @endforeach
