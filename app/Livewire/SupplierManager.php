@@ -118,6 +118,7 @@ class SupplierManager extends Component
             'batch_no' => $this->batchNo,
             'expiry_date' => $this->expiryDate,
             'quantity' => $this->qty,
+            'units_per_strip' => $med->units_per_strip,
             'purchase_price' => $this->pPrice,
             'sales_price' => $this->sPrice,
             'reorder_point' => $this->reorderPoint,
@@ -173,15 +174,16 @@ class SupplierManager extends Component
         // 2. Create Batches
         foreach ($this->purchaseItems as $item) {
             $med = Medicine::findOrFail($item['medicine_id']);
-            $totalUnits = $item['quantity'] * $med->units_per_strip;
+            $unitsPerStrip = max(1, $med->units_per_strip);
+            $totalUnits = $item['quantity'] * $unitsPerStrip;
             
             MedicineBatch::create([
                 'medicine_id' => $item['medicine_id'],
                 'batch_no' => $item['batch_no'],
                 'expiry_date' => $item['expiry_date'],
                 'quantity' => $totalUnits, // Storing in total units/tablets
-                'purchase_price' => $item['purchase_price'], // This is strip price
-                'sales_price' => $item['sales_price'],
+                'purchase_price' => $item['purchase_price'] / $unitsPerStrip,
+                'sales_price' => $item['sales_price'] / $unitsPerStrip,
                 'reorder_point' => $item['reorder_point'],
                 'purchase_id' => $purchase->id,
                 'vendor_name' => $supplier->name,

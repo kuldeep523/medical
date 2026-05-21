@@ -98,7 +98,7 @@
             </div>
             <!-- Row 3 -->
             <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
-                <div class="col-4 d-flex align-items-center">
+                <div class="col-4 d-flex align-items-center ">
                     <span class="lbl" style="width:85px;">Order Type:</span>
                     <select wire:model="order_type" class="form-select form-select-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;width:100px;color:#008080;">
                         <option>Walk-in</option><option>Delivery</option><option>Counter</option>
@@ -108,9 +108,9 @@
                     <span class="lbl" style="width:85px;">Address:</span>
                     <input type="text" wire:model="patient_address" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="Patient Address">
                 </div>
-                <div class="col-4 d-flex align-items-center justify-content-end pe-2">
-                    <span class="lbl">Date:</span>
-                    <span class="fw-bold ms-1" style="color:#008080;">{{ now()->format('d-m-Y') }}</span>
+                <div class="col-4 d-flex align-items-center justify-content-end pe-2 ">
+                    <span class="lbl" style="width:75px;">Date:</span>
+                    <input type="date" wire:model="sale_date" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="Date">
                 </div>
             </div>
             <!-- Row 4 -->
@@ -135,7 +135,7 @@
             <div class="col-1 border-end border-white border-opacity-50 p-1">STRI</div>
             <div class="col-1 border-end border-white border-opacity-50 p-1">TAB.</div>
             <div class="col-1 border-end border-white border-opacity-50 p-1">TAX %</div>
-            <div class="col-2 border-end border-white border-opacity-50 p-1">M.R.P./S</div>
+            <div class="col-2 border-end border-white border-opacity-50 p-1">MRP/TAB</div>
             <div class="col-2 p-1">AMOUNT</div>
         </div>
 
@@ -156,7 +156,19 @@
                             $taxAmt    = $taxRate > 0 ? round($rowTotal - ($rowTotal / (1 + $taxRate / 100)), 2) : 0;
                         @endphp
                         <tr class="align-middle" style="height:22px;">
-                            <td class="text-start ps-2 fw-bold border-end border-bottom">{{ $item['name'] }}</td>
+                            <td class="text-start ps-2 fw-bold border-end border-bottom">
+                                {{ $item['name'] }}
+                                @php
+                                    $itemUps = $item['units_per_strip'] ?? 1;
+                                    $stripPriceDisplay = $itemUps > 1 ? round(($item['unit_price'] ?? $item['price'] ?? 0) * $itemUps, 2) : null;
+                                @endphp
+                                @if($itemUps > 1)
+                                    <div class="text-muted" style="font-size: 9px; font-weight: normal;">
+                                        ₹{{ number_format($item['unit_price'] ?? $item['price'], 2) }}/tab
+                                        (₹{{ number_format($stripPriceDisplay, 2) }}/strip)
+                                    </div>
+                                @endif
+                            </td>
                             <td class="border-end border-bottom">{{ $item['units_per_strip'] ?? '—' }}s</td>
                             <td class="border-end border-bottom" style="font-size:10px;">{{ $item['batch_no'] }}</td>
                             <td class="border-end border-bottom p-0">
@@ -181,10 +193,17 @@
                                     <option value="28">28%</option>
                                 </select>
                             </td>
-                            <td class="border-end border-bottom p-0">
+                            <td class="border-end border-bottom p-0" style="position:relative;">
+                                @php
+                                    $itemUps2 = $item['units_per_strip'] ?? 1;
+                                    $unitPriceVal = $item['unit_price'] ?? $item['price'] ?? 0;
+                                @endphp
                                 <input type="number" wire:model.live="cart.{{ $ci }}.price"
                                        class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
                                        style="font-size:11px;height:22px;" step="0.01" min="0">
+                                @if($itemUps2 > 1)
+                                    <div style="font-size:8px;color:#888;line-height:1;">strip=₹{{ number_format($unitPriceVal * $itemUps2, 0) }}</div>
+                                @endif
                             </td>
                             <td class="border-bottom position-relative" style="line-height:1.2;">
                                 <span class="fw-bold" style="font-size:11px;">₹{{ number_format($rowTotal, 2) }}</span>
@@ -193,7 +212,7 @@
                                 @endif
                                 <button type="button" wire:click="removeFromCart({{ $ci }})"
                                         class="btn btn-sm btn-link text-danger position-absolute end-0 top-0 py-0 px-1 border-0"
-                                        style="font-size:13px;font-weight:bold;line-height:22px;text-decoration:none;">×</button>
+                                        style="font-size:13px;font-weight:bold;line-height:22px;text-decoration:none;">Del</button>
                             </td>
                         </tr>
                     @endforeach
@@ -240,8 +259,16 @@
                                                     @endif
                                                 </div>
                                             </div>
-                                            <div class="fw-bold ms-2 flex-shrink-0" style="color:#008080;">
-                                                ₹{{ number_format($med->batches->first()->sales_price ?? 0, 2) }}
+                                            @php
+                                                $firstBatch = $med->batches->first();
+                                                $unitsPerStrip = max(1, $med->units_per_strip ?? 1);
+                                                $priceToShow = $firstBatch ? ($firstBatch->sales_price * $unitsPerStrip) : 0;
+                                            @endphp
+                                            <div class="fw-bold ms-2 flex-shrink-0 text-end" style="color:#008080;">
+                                                <div>₹{{ number_format($priceToShow, 2) }}</div>
+                                                @if($unitsPerStrip > 1 && $firstBatch)
+                                                    <div class="text-muted" style="font-size: 9px; font-weight: normal;">(₹{{ number_format($firstBatch->sales_price, 2) }}/tab)</div>
+                                                @endif
                                             </div>
                                         </button>
                                     @endforeach
@@ -410,11 +437,23 @@
                             @foreach($lastSale->items as $item)
                                 <tr>
                                     <td class="py-1 text-start">
-                                        {{ $item->medicine->name }}
+                                        {{ $item->medicine->name ?? 'N/A' }}
                                         <div style="font-size:9px;color:#888;">Batch: {{ $item->batch_no }}</div>
                                     </td>
-                                    <td class="py-1 text-center">{{ $item->quantity }}</td>
-                                    <td class="py-1 text-end">₹{{ number_format($item->price, 2) }}</td>
+                                    <td class="py-1 text-center">
+                                        {{ $item->quantity }}
+                                        @if(($item->medicine->units_per_strip ?? 1) > 1)
+                                            <div style="font-size: 9px; color: #888;">
+                                                ({{ intdiv($item->quantity, $item->medicine->units_per_strip) }} S, {{ $item->quantity % $item->medicine->units_per_strip }} T)
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="py-1 text-end">
+                                        ₹{{ number_format($item->price, 2) }}
+                                        @if(($item->medicine->units_per_strip ?? 1) > 1)
+                                            <span style="font-size: 9px; color: #888;">/tab</span>
+                                        @endif
+                                    </td>
                                     <td class="py-1 text-end">₹{{ number_format($item->total, 2) }}</td>
                                 </tr>
                             @endforeach

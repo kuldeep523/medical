@@ -143,9 +143,12 @@ class PosSystem extends Component
             return;
         }
 
+        $unitsPerStrip = max(1, $medicine->units_per_strip ?? 1);
         $this->selectedMedicine = $medicine;
         $this->selectedBatch    = $batch;
         $this->inputQuantity    = 1;
+        // Store per-unit price directly (e.g. 13/tab) — NOT strip price (130/strip)
+        // The M.R.P./S field shows per-unit price so user sees 13 for 1 tablet, not 130
         $this->inputPrice       = $batch->sales_price;
 
         $this->addToCart();
@@ -175,14 +178,16 @@ class PosSystem extends Component
                 $this->cart[$i]['quantity'] += $this->inputQuantity;
                 $this->cart[$i]['strips']    = intdiv($this->cart[$i]['quantity'], $unitsPerStrip);
                 $this->cart[$i]['tablets']   = $this->cart[$i]['quantity'] % $unitsPerStrip;
-                $this->cart[$i]['total']     = round($this->cart[$i]['price'] * $this->cart[$i]['quantity'], 2);
+                $this->cart[$i]['total']     = round($this->cart[$i]['unit_price'] * $this->cart[$i]['quantity'], 2);
                 $this->calculateGrandTotal();
                 $this->resetInput();
                 return;
             }
         }
 
-        $total    = round($this->inputPrice * $this->inputQuantity, 2);
+        // inputPrice is already per-unit price (e.g. 13/tab)
+        $unitPrice = $this->inputPrice;
+        $total    = round($unitPrice * $this->inputQuantity, 2);
         $strips   = intdiv($this->inputQuantity, $unitsPerStrip);
         $tablets  = $this->inputQuantity % $unitsPerStrip;
 
@@ -200,10 +205,8 @@ class PosSystem extends Component
             'units_per_strip' => $unitsPerStrip,
             'price'           => $this->inputPrice,
             'tax_percent'     => 0,
-            'unit_price'      => $unitsPerStrip > 1 ? round($this->inputPrice / $unitsPerStrip, 4) : $this->inputPrice,
-            'purchase_price'  => $unitsPerStrip > 1
-                ? round($this->selectedBatch->purchase_price / $unitsPerStrip, 4)
-                : $this->selectedBatch->purchase_price,
+            'unit_price'      => $unitPrice,
+            'purchase_price'  => $this->selectedBatch->purchase_price,
             'total'           => $total,
         ];
 
@@ -254,11 +257,12 @@ class PosSystem extends Component
             $item['quantity'] = ($strips * $unitsPerStrip) + $tablets;
         }
 
+        // price in cart is per-unit (e.g. 13/tab) — no strip conversion needed
         $price    = max(0, floatval($item['price']    ?? 0));
         $quantity = max(0, intval($item['quantity']   ?? 0));
 
-        $item['total']      = round($price * $quantity, 2);
-        $item['unit_price'] = $unitsPerStrip > 1 ? round($price / $unitsPerStrip, 4) : $price;
+        $item['unit_price'] = $price;  // price field is already per-unit
+        $item['total']      = round($item['unit_price'] * $quantity, 2);
 
         $this->calculateGrandTotal();
     }
@@ -326,7 +330,7 @@ class PosSystem extends Component
                         'medicine_id'    => $item['medicine_id'],
                         'batch_no'       => $item['batch_no'],
                         'quantity'       => $item['quantity'],
-                        'price'          => $item['price'],
+                        'price'          => $item['unit_price'],
                         'purchase_price' => $item['purchase_price'],
                         'total'          => $item['total'],
                     ]);

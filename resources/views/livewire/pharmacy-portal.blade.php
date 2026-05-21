@@ -144,6 +144,10 @@
     @elseif($activeView === 'stockin')
         <div class="erp-form-header">STOCK ARRIVAL ENTRY (PURCHASE)</div>
         <form wire:submit.prevent="processStockIn" class="p-3 row g-2">
+            @php
+                $selMed = $medicines->firstWhere('id', $selectedMedicineId);
+                $selUnits = $selMed ? $selMed->units_per_strip : 1;
+            @endphp
 
             <div class="col-md-6">
                 <label class="erp-label">SELECT MEDICINE *</label>
@@ -163,7 +167,7 @@
             </div>
 
             <div class="col-md-3">
-                <label class="erp-label">QTY (strips/units) *</label>
+                <label class="erp-label">QTY ({{ $selUnits > 1 ? 'strips' : 'units' }}) *</label>
                 <input type="number" wire:model="stockInQuantity" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
                 @error('stockInQuantity') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
@@ -175,13 +179,13 @@
             </div>
 
             <div class="col-md-3">
-                <label class="erp-label">PURCHASE PRICE (₹)</label>
+                <label class="erp-label">PURCHASE PRICE {{ $selUnits > 1 ? '/ STRIP' : '' }} (₹)</label>
                 <input type="number" wire:model="stockInPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" min="0" />
                 @error('stockInPrice') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
             <div class="col-md-3">
-                <label class="erp-label">MRP (₹)</label>
+                <label class="erp-label">MRP {{ $selUnits > 1 ? '/ STRIP' : '' }} (₹)</label>
                 <input type="number" wire:model="stockInSalesPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" min="0" />
                 @error('stockInSalesPrice') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
@@ -296,12 +300,12 @@
                         @error('batch_expiry_date') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
-                        <label class="erp-label">PURCHASE (₹)</label>
+                        <label class="erp-label">PURCHASE {{ $units_per_strip > 1 ? '/ STRIP' : '' }} (₹)</label>
                         <input type="number" wire:model="batch_purchase_price" step="0.01" min="0" class="form-control form-control-sm rounded-0 erp-input" />
                         @error('batch_purchase_price') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
-                        <label class="erp-label">MRP (₹)</label>
+                        <label class="erp-label">MRP {{ $units_per_strip > 1 ? '/ STRIP' : '' }} (₹)</label>
                         <input type="number" wire:model="batch_sales_price" step="0.01" min="0" class="form-control form-control-sm rounded-0 erp-input" />
                         @error('batch_sales_price') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
@@ -337,8 +341,18 @@
                                         {{ date('d-m-Y', strtotime($b->expiry_date)) }}
                                     </td>
                                     <td class="fw-bold">{{ $b->quantity }}</td>
-                                    <td>₹{{ number_format($b->purchase_price, 2) }}</td>
-                                    <td class="text-primary fw-bold">₹{{ number_format($b->sales_price, 2) }}</td>
+                                    <td>
+                                        ₹{{ number_format($b->purchase_price * $units_per_strip, 2) }}
+                                        @if($units_per_strip > 1)
+                                            <div class="text-muted" style="font-size: 10px;">(₹{{ number_format($b->purchase_price, 2) }}/tab)</div>
+                                        @endif
+                                    </td>
+                                    <td class="text-primary fw-bold">
+                                        ₹{{ number_format($b->sales_price * $units_per_strip, 2) }}
+                                        @if($units_per_strip > 1)
+                                            <div class="text-muted" style="font-size: 10px;">(₹{{ number_format($b->sales_price, 2) }}/tab)</div>
+                                        @endif
+                                    </td>
                                     <td>
                                         <button wire:click="deleteBatch({{ $b->id }})"
                                                 wire:confirm="Delete batch {{ $b->batch_no }}?"

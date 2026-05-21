@@ -196,7 +196,11 @@ class PharmacyPortal extends Component
         $medicine = Medicine::where('store_id', auth()->user()->store_id)
             ->findOrFail($this->selectedMedicineId);
 
-        $totalUnits = $this->stockInQuantity * max(1, $medicine->units_per_strip);
+        $unitsPerStrip = max(1, $medicine->units_per_strip);
+        $totalUnits = $this->stockInQuantity * $unitsPerStrip;
+
+        $perUnitPurchasePrice = $this->stockInPrice ? ($this->stockInPrice / $unitsPerStrip) : 0;
+        $perUnitSalesPrice = $this->stockInSalesPrice ? ($this->stockInSalesPrice / $unitsPerStrip) : 0;
 
         $existingBatch = MedicineBatch::where('medicine_id', $medicine->id)
             ->where('batch_no', $this->stockInBatchNo)
@@ -204,8 +208,8 @@ class PharmacyPortal extends Component
 
         if ($existingBatch) {
             $existingBatch->quantity += $totalUnits;
-            if ($this->stockInPrice)      $existingBatch->purchase_price = $this->stockInPrice;
-            if ($this->stockInSalesPrice) $existingBatch->sales_price    = $this->stockInSalesPrice;
+            if ($this->stockInPrice !== null && $this->stockInPrice !== '')      $existingBatch->purchase_price = $perUnitPurchasePrice;
+            if ($this->stockInSalesPrice !== null && $this->stockInSalesPrice !== '') $existingBatch->sales_price    = $perUnitSalesPrice;
             if ($this->vendor_name)       $existingBatch->vendor_name    = $this->vendor_name;
             $existingBatch->save();
             session()->flash('status', "Batch '{$this->stockInBatchNo}' updated — stock increased by {$totalUnits} units.");
@@ -215,8 +219,8 @@ class PharmacyPortal extends Component
                 'batch_no'       => $this->stockInBatchNo,
                 'expiry_date'    => $this->stockInExpiry,
                 'quantity'       => $totalUnits,
-                'purchase_price' => $this->stockInPrice ?? 0,
-                'sales_price'    => $this->stockInSalesPrice ?? 0,
+                'purchase_price' => $perUnitPurchasePrice,
+                'sales_price'    => $perUnitSalesPrice,
                 'reorder_point'  => $medicine->reorder_point ?? 10,
                 'vendor_name'    => $this->vendor_name,
                 'user_id'        => auth()->id(),
@@ -242,6 +246,10 @@ class PharmacyPortal extends Component
         ]);
 
         $medicine = Medicine::where('store_id', auth()->user()->store_id)->findOrFail($this->medId);
+        $unitsPerStrip = max(1, $medicine->units_per_strip);
+
+        $perUnitPurchasePrice = $this->batch_purchase_price ? ($this->batch_purchase_price / $unitsPerStrip) : 0;
+        $perUnitSalesPrice = $this->batch_sales_price ? ($this->batch_sales_price / $unitsPerStrip) : 0;
 
         $existingBatch = MedicineBatch::where('medicine_id', $medicine->id)
             ->where('batch_no', $this->batch_no)
@@ -249,6 +257,12 @@ class PharmacyPortal extends Component
 
         if ($existingBatch) {
             $existingBatch->quantity += $this->batch_quantity;
+            if ($this->batch_purchase_price !== null && $this->batch_purchase_price !== '') {
+                $existingBatch->purchase_price = $perUnitPurchasePrice;
+            }
+            if ($this->batch_sales_price !== null && $this->batch_sales_price !== '') {
+                $existingBatch->sales_price = $perUnitSalesPrice;
+            }
             $existingBatch->save();
             session()->flash('status', "Batch '{$this->batch_no}' quantity updated.");
         } else {
@@ -257,8 +271,8 @@ class PharmacyPortal extends Component
                 'batch_no'       => $this->batch_no,
                 'expiry_date'    => $this->batch_expiry_date,
                 'quantity'       => $this->batch_quantity,
-                'purchase_price' => $this->batch_purchase_price ?? 0,
-                'sales_price'    => $this->batch_sales_price ?? 0,
+                'purchase_price' => $perUnitPurchasePrice,
+                'sales_price'    => $perUnitSalesPrice,
                 'reorder_point'  => $medicine->reorder_point ?? 10,
                 'user_id'        => auth()->id(),
                 'store_id'       => auth()->user()->store_id,

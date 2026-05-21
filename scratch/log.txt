@@ -1,0 +1,5 @@
+global updated called: name=cart.0.strips, value=0
+updatedCart called: key=0.strips, value=0
+global updated called: name=cart.0.tablets, value=1
+updatedCart called: key=0.tablets, value=1
+updatedCart called: key=0.strips, value=0

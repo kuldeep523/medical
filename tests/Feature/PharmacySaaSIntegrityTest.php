@@ -151,8 +151,8 @@ test('loose sale and rounding: strips and tablets math', function () {
         'batch_no' => 'STRIP-01',
         'expiry_date' => now()->addYear(),
         'quantity' => 15,
-        'purchase_price' => 100,
-        'sales_price' => 143, // Price per strip
+        'purchase_price' => 100 / 15,
+        'sales_price' => 143 / 15, // Price per unit
         'user_id' => $this->adminA->id,
         'store_id' => $this->storeA->id
     ]);

@@ -135,6 +135,10 @@
 
         {{-- Entry Row --}}
         <div class="bg-white border-bottom p-2" style="background:#fffdf0 !important;">
+            @php
+                $selMed = $medicines->firstWhere('id', $selectedMedId);
+                $selUnits = $selMed ? $selMed->units_per_strip : 1;
+            @endphp
             <div class="row g-1 align-items-end">
                 <div class="col-md-3">
                     <label class="erp-label">MEDICINE *</label>
@@ -154,15 +158,15 @@
                     <input type="date" wire:model="expiryDate" class="form-control form-control-sm rounded-0 erp-input" />
                 </div>
                 <div class="col-md-1">
-                    <label class="erp-label">QTY (strips)</label>
+                    <label class="erp-label">QTY ({{ $selUnits > 1 ? 'strips' : 'units' }})</label>
                     <input type="number" wire:model="qty" class="form-control form-control-sm rounded-0 erp-input" />
                 </div>
                 <div class="col-md-1">
-                    <label class="erp-label">P. PRICE</label>
+                    <label class="erp-label">P. PRICE {{ $selUnits > 1 ? '/ STRIP' : '' }}</label>
                     <input type="number" wire:model="pPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
                 </div>
                 <div class="col-md-1">
-                    <label class="erp-label">MRP</label>
+                    <label class="erp-label">MRP {{ $selUnits > 1 ? '/ STRIP' : '' }}</label>
                     <input type="number" wire:model="sPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
                 </div>
                 <div class="col-md-1">
@@ -200,8 +204,13 @@
                             <td class="text-start ps-2 fw-bold">{{ $item['medicine_name'] }}</td>
                             <td>{{ $item['batch_no'] }}</td>
                             <td>{{ date('d-m-Y', strtotime($item['expiry_date'])) }}</td>
-                            <td>{{ $item['quantity'] }}</td>
-                            <td>₹{{ number_format($item['purchase_price'], 2) }}</td>
+                            <td>{{ $item['quantity'] }} {{ ($item['units_per_strip'] ?? 1) > 1 ? 'strips' : 'units' }}</td>
+                            <td>
+                                ₹{{ number_format($item['purchase_price'], 2) }}
+                                @if(($item['units_per_strip'] ?? 1) > 1)
+                                    <div class="text-muted" style="font-size: 10px;">(₹{{ number_format($item['purchase_price'] / $item['units_per_strip'], 2) }}/tab)</div>
+                                @endif
+                            </td>
                             <td>{{ $item['disc_percent'] }}%</td>
                             <td>{{ $item['gst_percent'] }}%</td>
                             <td class="fw-bold">₹{{ number_format($item['total'], 2) }}</td>
