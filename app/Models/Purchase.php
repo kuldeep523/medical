@@ -18,10 +18,6 @@ class Purchase extends Model
         'payment_mode',
         'user_id',
         'store_id',
-<<<<<<< HEAD
-        'dues_cleared_at',
-=======
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
     ];
 
     protected static function booted()

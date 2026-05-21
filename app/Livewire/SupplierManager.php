@@ -31,11 +31,7 @@ class SupplierManager extends Component
 
     // Ledger View
     public $selectedSupplierId;
-<<<<<<< HEAD
     public $paymentAmount, $paymentNote, $paymentMode = 'Cash';
-=======
-    public $paymentAmount, $paymentNote;
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
 
     public function mount()
     {
@@ -222,11 +218,7 @@ class SupplierManager extends Component
             'supplier_id' => $supplier->id,
             'amount' => $this->paymentAmount,
             'payment_date' => date('Y-m-d'),
-<<<<<<< HEAD
             'payment_mode' => $this->paymentMode,
-=======
-            'payment_mode' => 'Cash',
->>>>>>> a26ef6b30af880529baee2c9b637ce50b45c670f
             'note' => $this->paymentNote,
             'user_id' => auth()->id(),
             'store_id' => auth()->user()->store_id,
