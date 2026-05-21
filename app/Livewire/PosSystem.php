@@ -43,6 +43,8 @@ class PosSystem extends Component
     public $doctor_name     = '';     // fallback free-text
     public $doctor_number   = '';
     public $doctor_register_no   = '';
+    public $sale_date       = '';
+    public $discount_percent = 0;
 
     // Daily tracking
     public $dailyRevenue = 0;
@@ -56,6 +58,7 @@ class PosSystem extends Component
     {
         $this->loadDoctors();
         $this->calculateDailyStats();
+        $this->sale_date = now()->format('Y-m-d');
     }
 
     public function loadDoctors(): void
@@ -217,11 +220,23 @@ class PosSystem extends Component
         $this->resetInput();
     }
 
+    public function updatedDiscountPercent(): void
+    {
+        $this->calculateGrandTotal();
+    }
+
+    public function selectCartItem(int $index): void
+    {
+        if (isset($this->cart[$index])) {
+            $item = $this->cart[$index];
+            $this->selectedMedicine = Medicine::with('batches')->find($item['medicine_id']);
+            $this->selectedBatch = MedicineBatch::find($item['batch_id']);
+        }
+    }
+
     /** Reset selection/search fields after adding */
     private function resetInput(): void
     {
-        $this->selectedMedicine = null;
-        $this->selectedBatch    = null;
         $this->inputQuantity    = 1;
         $this->inputPrice       = 0;
         $this->searchQuery      = '';
@@ -234,6 +249,13 @@ class PosSystem extends Component
     // ─────────────────────────────────────────────
     public function removeFromCart(int $index): void
     {
+        if (isset($this->cart[$index])) {
+            $item = $this->cart[$index];
+            if ($this->selectedMedicine && $this->selectedMedicine->id === $item['medicine_id']) {
+                $this->selectedMedicine = null;
+                $this->selectedBatch = null;
+            }
+        }
         unset($this->cart[$index]);
         $this->cart = array_values($this->cart);
         $this->calculateGrandTotal();
@@ -275,7 +297,12 @@ class PosSystem extends Component
     // ─────────────────────────────────────────────
     public function calculateGrandTotal(): void
     {
-        $this->grandTotal = array_sum(array_column($this->cart, 'total'));
+        $totalBeforeDiscount = array_sum(array_column($this->cart, 'total'));
+        
+        $discountPercent = floatval($this->discount_percent ?? 0);
+        $discountAmount = round($totalBeforeDiscount * ($discountPercent / 100), 2);
+        
+        $this->grandTotal = round($totalBeforeDiscount - $discountAmount, 2);
 
         $gst = 0;
         foreach ($this->cart as $item) {
@@ -284,7 +311,8 @@ class PosSystem extends Component
             // Inclusive GST: tax = total − total/(1 + rate/100)
             $gst += $total - $total / (1 + $rate / 100);
         }
-        $this->gstTotal = round($gst, 2);
+        // Scale GST by discount
+        $this->gstTotal = round($gst * (1 - $discountPercent / 100), 2);
     }
 
     // ─────────────────────────────────────────────
@@ -308,27 +336,39 @@ class PosSystem extends Component
 
         try {
             DB::transaction(function () {
-                $sale = Sale::create([
-                    'user_id'         => auth()->id(),
-                    'store_id'        => auth()->user()->store_id,
-                    'bill_no'         => 'INV-'.strtoupper(Str::random(8)),
-                    'total_amount'    => $this->grandTotal,
-                    'customer_name'   => $this->customer_name,
-                    'customer_phone'  => $this->customer_phone,
-                    'payment_method'  => $this->payment_method,
-                    'amount_paid'     => $this->amount_paid ?: $this->grandTotal,
-                    'order_type'      => $this->order_type,
-                    'dispatch_status' => $this->order_type === 'Delivery' ? 'Pending' : 'Delivered',
-                    'bill_tag'        => $this->bill_tag,
-                    'patient_name'    => $this->patient_name,
-                    'patient_address' => $this->patient_address,
-                    'patient_reg_no'  => $this->patient_reg_no,
-                    'doctor_name'     => $this->doctor_name,
-                    'doctor_number'   => $this->doctor_number,
+                $totalBeforeDiscount = array_sum(array_column($this->cart, 'total'));
+                $discountPercent = floatval($this->discount_percent ?? 0);
+                $discountAmount = round($totalBeforeDiscount * ($discountPercent / 100), 2);
+
+                $sale = new Sale([
+                    'user_id'          => auth()->id(),
+                    'store_id'         => auth()->user()->store_id,
+                    'bill_no'          => 'INV-'.strtoupper(Str::random(8)),
+                    'total_amount'     => $this->grandTotal,
+                    'customer_name'    => $this->customer_name,
+                    'customer_phone'   => $this->customer_phone,
+                    'payment_method'   => $this->payment_method,
+                    'amount_paid'      => $this->amount_paid ?: $this->grandTotal,
+                    'order_type'       => $this->order_type,
+                    'dispatch_status'  => $this->order_type === 'Delivery' ? 'Pending' : 'Delivered',
+                    'bill_tag'         => $this->bill_tag,
+                    'patient_name'     => $this->patient_name,
+                    'patient_address'  => $this->patient_address,
+                    'patient_reg_no'   => $this->patient_reg_no,
+                    'doctor_name'      => $this->doctor_name,
+                    'doctor_number'    => $this->doctor_number,
+                    'discount_percent' => $discountPercent,
+                    'discount_amount'  => $discountAmount,
+                    'sale_date'        => $this->sale_date ?: now()->format('Y-m-d'),
                 ]);
 
+                if ($this->sale_date) {
+                    $sale->created_at = date('Y-m-d H:i:s', strtotime($this->sale_date . ' ' . now()->format('H:i:s')));
+                }
+                $sale->save();
+
                 foreach ($this->cart as $item) {
-                    SaleItem::create([
+                    $saleItem = new SaleItem([
                         'sale_id'        => $sale->id,
                         'medicine_id'    => $item['medicine_id'],
                         'batch_no'       => $item['batch_no'],
@@ -337,6 +377,10 @@ class PosSystem extends Component
                         'purchase_price' => $item['purchase_price'],
                         'total'          => $item['total'],
                     ]);
+                    if ($this->sale_date) {
+                        $saleItem->created_at = date('Y-m-d H:i:s', strtotime($this->sale_date . ' ' . now()->format('H:i:s')));
+                    }
+                    $saleItem->save();
 
                     // FEFO stock deduction
                     $remaining = $item['quantity'];
@@ -361,10 +405,11 @@ class PosSystem extends Component
             return;
         }
 
-        $this->cart        = [];
-        $this->grandTotal  = 0;
-        $this->gstTotal    = 0;
-        $this->invoiceMode = true;
+        $this->cart             = [];
+        $this->grandTotal       = 0;
+        // Keep gstTotal for printed receipt modal; reset on newSale()
+        $this->discount_percent = 0;
+        $this->invoiceMode      = true;
 
         $this->calculateDailyStats();
     }
@@ -382,8 +427,9 @@ class PosSystem extends Component
             'order_type', 'bill_tag',
             'patient_name', 'patient_address', 'patient_reg_no',
             'doctor_id', 'doctor_name', 'doctor_number',
-            'cart', 'grandTotal', 'gstTotal',
+            'cart', 'grandTotal', 'gstTotal', 'discount_percent',
         ]);
+        $this->sale_date = now()->format('Y-m-d');
     }
 
     public function render()

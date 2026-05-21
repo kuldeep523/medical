@@ -28,6 +28,9 @@ class Sale extends Model
         'doctor_name',
         'doctor_number',
         'dues_cleared_at',
+        'discount_percent',
+        'discount_amount',
+        'sale_date',
     ];
 
     protected static function booted()

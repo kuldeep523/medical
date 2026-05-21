@@ -154,8 +154,11 @@
                             $taxRate   = floatval($item['tax_percent'] ?? 0);
                             $rowTotal  = floatval($item['total'] ?? 0);
                             $taxAmt    = $taxRate > 0 ? round($rowTotal - ($rowTotal / (1 + $taxRate / 100)), 2) : 0;
+                            $isSelected = $selectedMedicine && $selectedMedicine->id === $item['medicine_id'] && $selectedBatch && $selectedBatch->id === $item['batch_id'];
                         @endphp
-                        <tr class="align-middle" style="height:22px;">
+                        <tr class="align-middle pos-cart-row {{ $isSelected ? 'selected-row' : '' }}"
+                            wire:click="selectCartItem({{ $ci }})"
+                            style="height:22px; cursor: pointer; {{ $isSelected ? 'background-color: rgba(0, 128, 128, 0.12) !important;' : '' }}">
                             <td class="text-start ps-2 fw-bold border-end border-bottom">
                                 {{ $item['name'] }} 
                                 @php
@@ -210,7 +213,7 @@
                                 @if($taxAmt > 0)
                                     <br><span style="font-size:9px;color:#b45309;">GST ₹{{ number_format($taxAmt, 2) }}</span>
                                 @endif
-                                <button type="button" wire:click="removeFromCart({{ $ci }})"
+                                <button type="button" wire:click.stop="removeFromCart({{ $ci }})"
                                         class="btn btn-sm btn-link text-danger position-absolute end-0 top-0 py-0 px-1 border-0"
                                         style="font-size:13px;font-weight:bold;line-height:22px;text-decoration:none;">Del</button>
                             </td>
@@ -324,7 +327,22 @@
                         </div>
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:60px;">Stock :</span>
-                            <span class="text-danger fw-bold">{{ $selectedMedicine ? $selectedMedicine->batches->sum('quantity') : '—' }}</span>
+                            @if($selectedMedicine)
+                                @php
+                                    $totQty = $selectedMedicine->batches->sum('quantity');
+                                    $ups = max(1, $selectedMedicine->units_per_strip ?? 1);
+                                    $st = intdiv($totQty, $ups);
+                                    $tb = $totQty % $ups;
+                                @endphp
+                                <span class="text-danger fw-bold">
+                                    {{ $totQty }}
+                                    @if($ups > 1)
+                                        ({{ $st }}S, {{ $tb }}T)
+                                    @endif
+                                </span>
+                            @else
+                                <span class="text-danger fw-bold">—</span>
+                            @endif
                         </div>
                     </div>
                     <div class="row g-0">
@@ -334,7 +352,7 @@
                         </div>
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:60px;">Date :</span>
-                            <span>{{ now()->format('d-m-Y') }}</span>
+                            <span>{{ $sale_date ? date('d-m-Y', strtotime($sale_date)) : now()->format('d-m-Y') }}</span>
                         </div>
                     </div>
                 </div>
@@ -345,9 +363,19 @@
                         <span class="lbl">VALUE OF GOODS :</span>
                         <span class="fw-bold">{{ number_format($grandTotal - $gstTotal, 2) }}</span>
                     </div>
-                    <div class="d-flex justify-content-between px-2 mb-1">
+                    @php
+                        $totalBeforeDiscount = array_sum(array_column($cart, 'total'));
+                        $discountAmount = round($totalBeforeDiscount * (($discount_percent ?? 0) / 100), 2);
+                    @endphp
+                    <div class="d-flex justify-content-between align-items-center px-2 mb-1">
                         <span class="lbl">DISCOUNT :</span>
-                        <span class="fw-bold">0.00</span>
+                        <div class="d-flex align-items-center gap-1">
+                            <input type="number" wire:model.live="discount_percent" 
+                                   class="form-control form-control-sm text-end fw-bold p-0 border-bottom border-top-0 border-start-0 border-end-0 rounded-0" 
+                                   style="font-size:11px;width:35px;height:18px;background:transparent;color:#008080;"
+                                   min="0" max="100" step="1">
+                            <span class="fw-bold" style="color: #008080;">% (₹{{ number_format($discountAmount, 2) }})</span>
+                        </div>
                     </div>
                     <div class="d-flex justify-content-between px-2 mb-2 pb-1 border-bottom">
                         <span class="lbl">GST :</span>
@@ -396,6 +424,12 @@
         input:focus { outline: none !important; box-shadow: none !important; background: #fffdf0 !important; }
         .table-bordered td { border: 1px solid #ccc !important; }
         .table > :not(caption) > * > * { padding: 0.05rem 0.2rem; }
+        .pos-cart-row {
+            transition: background-color 0.15s ease;
+        }
+        .pos-cart-row:hover {
+            background-color: rgba(0, 128, 128, 0.05) !important;
+        }
     </style>
 
     @if($invoiceMode && $lastSale)
@@ -462,6 +496,16 @@
                 </div>
 
                 <div class="py-3" style="font-size:12px;">
+                    @if(($lastSale->discount_percent ?? 0) > 0)
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Subtotal (before disc):</span>
+                            <span>₹{{ number_format($lastSale->total_amount + $lastSale->discount_amount, 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 text-danger">
+                            <span class="text-muted">Discount ({{ number_format($lastSale->discount_percent, 1) }}%):</span>
+                            <span>-₹{{ number_format($lastSale->discount_amount, 2) }}</span>
+                        </div>
+                    @endif
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted">Sub Total (excl. GST):</span>
                         <span>₹{{ number_format($lastSale->total_amount - $gstTotal, 2) }}</span>
