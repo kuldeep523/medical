@@ -63,15 +63,15 @@
                        placeholder="Search by Medicine Name or Batch No...">
             </div>
             <div style="width: 160px;">
-                <select wire:model.live="statusFilter" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                <x-searchable-select wire:model.live="statusFilter" class="rounded-0 border-secondary border-opacity-50" placeholder="All (Expired / Near-Exp)">
                     <option value="all">All (Expired / Near-Exp)</option>
                     <option value="expired">Expired Only</option>
                     <option value="near_expiry">Near Expiry Only</option>
                     <option value="returned">Already Returned</option>
-                </select>
+                </x-searchable-select>
             </div>
             <div style="width: 200px;">
-                <select wire:model.live="supplierFilter" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                <x-searchable-select wire:model.live="supplierFilter" class="rounded-0 border-secondary border-opacity-50" placeholder="All Suppliers / Vendors">
                     <option value="all">All Suppliers / Vendors</option>
                     @foreach($suppliers as $sup)
                         <option value="{{ $sup->name }}">{{ $sup->name }}</option>
@@ -81,7 +81,7 @@
                             <option value="{{ $vName }}">{{ $vName }}</option>
                         @endif
                     @endforeach
-                </select>
+                </x-searchable-select>
             </div>
         </div>
         <div class="text-muted pe-2" style="font-size: 10px;">

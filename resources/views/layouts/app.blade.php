@@ -61,7 +61,7 @@
             <a href="{{ route('suppliers.index') }}" class="sidebar-btn {{ request()->routeIs('suppliers.index') ? 'active' : '' }}">Purchase Invoice</a>
             <a href="{{ route('doctors.index') }}" class="sidebar-btn {{ request()->routeIs('doctors.index') ? 'active' : '' }}">Doctor Master</a>
             <a href="{{ route('sr-expiry.index') }}" class="sidebar-btn {{ request()->routeIs('sr-expiry.index') ? 'active' : '' }}">S/R Expiry</a>
-            <a href="#" class="sidebar-btn">P/R Expiry</a>
+            <a href="{{ route('pr-expiry.index') }}" class="sidebar-btn {{ request()->routeIs('pr-expiry.index') ? 'active' : '' }}">P/R Expiry</a>
             <a href="{{ route('receipts.index') }}" class="sidebar-btn {{ request()->routeIs('receipts.index') ? 'active' : '' }}">Receipt</a>
             <a href="{{ route('payments.index') }}" class="sidebar-btn {{ request()->routeIs('payments.index') ? 'active' : '' }}">Payment</a>
             <a href="{{ route('accounting.index', ['tab' => 'day_book']) }}" class="sidebar-btn {{ request()->query('tab') === 'day_book' ? 'active' : '' }}">Cash & Bank Book</a>
@@ -143,6 +143,7 @@
             <span><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">Alt+L</kbd> Ledger</span>
             <span><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">Alt+B</kbd> Cash Book</span>
             <span><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">Alt+E</kbd> S/R Expiry</span>
+            <span><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">Alt+Y</kbd> P/R Expiry</span>
             <span><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">Alt+N</kbd> New Sale</span>
             <span><kbd style="background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:1px 4px; border-radius:2px; font-size:9px;">Alt+X</kbd> Logout</span>
         </div>
@@ -213,6 +214,10 @@
                     <tr style="border-bottom:1px solid #f0f0f0;">
                         <td style="padding:5px 8px;"><kbd>Alt</kbd> + <kbd>E</kbd></td>
                         <td style="padding:5px 8px; color:#555;">Go to S/R Expiry</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #f0f0f0;">
+                        <td style="padding:5px 8px;"><kbd>Alt</kbd> + <kbd>Y</kbd></td>
+                        <td style="padding:5px 8px; color:#555;">Go to P/R Expiry</td>
                     </tr>
                     <tr style="border-bottom:1px solid #f0f0f0;">
                         <td style="padding:5px 8px;"><kbd>Alt</kbd> + <kbd>L</kbd></td>
@@ -332,6 +337,7 @@
         'r': '{{ route("receipts.index") }}',
         'm': '{{ route("payments.index") }}',
         'e': '{{ route("sr-expiry.index") }}',
+        'y': '{{ route("pr-expiry.index") }}',
         'l': '{{ route("ledger.index") }}',
         'b': '{{ route("accounting.index", ["tab" => "day_book"]) }}',
         'a': '{{ route("accounting.index", ["tab" => "mis_dashboard"]) }}',
@@ -345,6 +351,7 @@
         'r': 'Receipts',
         'm': 'Payments',
         'e': 'S/R Expiry',
+        'y': 'P/R Expiry',
         'l': 'Ledger A/c',
         'b': 'Cash & Bank Book',
         'a': 'Sales Analysis (MIS)',

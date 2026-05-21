@@ -56,16 +56,17 @@
                 </div>
                 <div class="col-4 d-flex align-items-center gap-1">
                     <span class="lbl" style="width:85px;flex-shrink:0;">Doctor:</span>
-                    <select wire:model.live="doctor_id"
-                            class="form-select form-select-sm border-0 bg-transparent p-0 fw-bold"
-                            style="font-size:11px;color:#008080;min-width:0;flex:1;">
+                    <x-searchable-select wire:model.live="doctor_id"
+                            class="border-0 bg-transparent p-0 fw-bold"
+                            style="font-size:11px;color:#008080;min-width:0;flex:1;"
+                            placeholder="— Select Doctor —">
                         <option value="">— Select Doctor —</option>
                         @foreach($doctors as $doc)
                             <option value="{{ $doc['id'] }}">
                                 Dr. {{ $doc['name'] }}{{ $doc['specialization'] ? ' ('.$doc['specialization'].')' : '' }}
                             </option>
                         @endforeach
-                    </select>
+                    </x-searchable-select>
                     <a href="{{ route('doctors.index') }}" target="_blank"
                        title="Add new doctor"
                        class="text-success fw-bold text-decoration-none flex-shrink-0"
@@ -91,18 +92,24 @@
                 </div>
                 <div class="col-4 d-flex align-items-center justify-content-end pe-2">
                     <span class="lbl" style="width:90px;">Payment Mode:</span>
-                    <select wire:model="payment_method" class="form-select form-select-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;width:100px;color:#008080;">
-                        <option>Cash</option><option>Online</option><option>Card</option><option>UPI</option><option>Credit</option>
-                    </select>
+                    <x-searchable-select wire:model="payment_method" class="border-0 bg-transparent p-0 fw-bold" style="font-size:11px;width:100px;color:#008080;" placeholder="Cash">
+                        <option value="Cash">Cash</option>
+                        <option value="Online">Online</option>
+                        <option value="Card">Card</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Credit">Credit</option>
+                    </x-searchable-select>
                 </div>
             </div>
             <!-- Row 3 -->
             <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
                 <div class="col-4 d-flex align-items-center ">
                     <span class="lbl" style="width:85px;">Order Type:</span>
-                    <select wire:model="order_type" class="form-select form-select-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;width:100px;color:#008080;">
-                        <option>Walk-in</option><option>Delivery</option><option>Counter</option>
-                    </select>
+                    <x-searchable-select wire:model="order_type" class="border-0 bg-transparent p-0 fw-bold" style="font-size:11px;width:100px;color:#008080;" placeholder="Walk-in">
+                        <option value="Walk-in">Walk-in</option>
+                        <option value="Delivery">Delivery</option>
+                        <option value="Counter">Counter</option>
+                    </x-searchable-select>
                 </div>
                 <div class="col-4 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Address:</span>
@@ -115,11 +122,7 @@
             </div>
             <!-- Row 4 -->
             <div class="row g-0 p-1">
-                <div class="col-6 d-flex align-items-center">
-                    <span class="lbl" style="width:85px;">Party Name:</span>
-                    <input type="text" wire:model="customer_name" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="CASH / Walk-in">
-                </div>
-                <div class="col-6 d-flex align-items-center">
+                <div class="col-12 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Reg. No.:</span>
                     <input type="text" wire:model="doctor_register_no"  class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;" placeholder="{{ $lastSale ? 'Auto-filled' : 'Registration No' }}">
                 </div>
@@ -186,15 +189,16 @@
                             </td>
                             {{-- TAX % — GST slab dropdown --}}
                             <td class="border-end border-bottom p-0">
-                                <select wire:model.live="cart.{{ $ci }}.tax_percent"
-                                        class="form-select form-select-sm border-0 bg-transparent text-center p-0 fw-bold"
-                                        style="font-size:10px;height:22px;cursor:pointer;color:{{ $taxRate > 0 ? '#b45309' : '#555' }};">
+                                <x-searchable-select wire:model.live="cart.{{ $ci }}.tax_percent"
+                                        class="border-0 bg-transparent text-center p-0 fw-bold"
+                                        style="font-size:10px;height:22px;color:{{ $taxRate > 0 ? '#b45309' : '#555' }};"
+                                        placeholder="0%">
                                     <option value="0">0%</option>
                                     <option value="5">5%</option>
                                     <option value="12">12%</option>
                                     <option value="18">18%</option>
                                     <option value="28">28%</option>
-                                </select>
+                                </x-searchable-select>
                             </td>
                             <td class="border-end border-bottom p-0" style="position:relative;">
                                 @php

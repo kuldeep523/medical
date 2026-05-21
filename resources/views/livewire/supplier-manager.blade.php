@@ -111,12 +111,12 @@
             <div class="row g-2">
                 <div class="col-md-3">
                     <label class="erp-label">SUPPLIER *</label>
-                    <select wire:model="supplier_id" class="form-select form-select-sm rounded-0 erp-input" required>
+                    <x-searchable-select wire:model="supplier_id" class="rounded-0 erp-input" required placeholder="— select vendor —">
                         <option value="">— select vendor —</option>
                         @foreach($suppliers as $s)
                             <option value="{{ $s->id }}">{{ $s->name }}</option>
                         @endforeach
-                    </select>
+                    </x-searchable-select>
                 </div>
                 <div class="col-md-2">
                     <label class="erp-label">BILL NUMBER *</label>
@@ -142,12 +142,12 @@
             <div class="row g-1 align-items-end">
                 <div class="col-md-3">
                     <label class="erp-label">MEDICINE *</label>
-                    <select wire:model="selectedMedId" class="form-select form-select-sm rounded-0 erp-input">
+                    <x-searchable-select wire:model="selectedMedId" class="rounded-0 erp-input" placeholder="— choose —">
                         <option value="">— choose —</option>
                         @foreach($medicines as $m)
                             <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->power_mg }})</option>
                         @endforeach
-                    </select>
+                    </x-searchable-select>
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">BATCH *</label>
@@ -237,11 +237,11 @@
                 </div>
                 <div class="col-md-2">
                     <label class="erp-label">PAYMENT MODE</label>
-                    <select wire:model="payment_mode" class="form-select form-select-sm rounded-0 erp-input">
+                    <x-searchable-select wire:model="payment_mode" class="rounded-0 erp-input" placeholder="Select payment mode">
                         <option value="Cash">Cash</option>
                         <option value="UPI">UPI / Bank</option>
                         <option value="Credit">Credit (Full Due)</option>
-                    </select>
+                    </x-searchable-select>
                 </div>
                 <div class="col-md-5 text-end">
                     <button wire:click="savePurchase" class="erp-btn-primary" style="padding:8px 30px; font-size:12px;">FINALIZE PURCHASE BILL</button>
@@ -328,11 +328,11 @@
                     </div>
                     <div class="col-12">
                         <label class="erp-label">PAYMENT MODE</label>
-                        <select class="form-select form-select-sm rounded-0 erp-input">
-                            <option>Cash</option>
-                            <option>Bank / Check</option>
-                            <option>UPI</option>
-                        </select>
+                        <x-searchable-select wire:model="paymentMode" class="rounded-0 erp-input" placeholder="Cash">
+                            <option value="Cash">Cash</option>
+                            <option value="Bank / Check">Bank / Check</option>
+                            <option value="UPI">UPI</option>
+                        </x-searchable-select>
                     </div>
                     <div class="col-12">
                         <label class="erp-label">NOTE / REFERENCE</label>

@@ -152,19 +152,19 @@
                     </div>
                     <div class="col-6">
                         <label class="erp-label">CATEGORY</label>
-                        <select wire:model="expense_category" class="form-select form-select-sm rounded-0 erp-input">
-                            <option>General</option>
-                            <option>Salary</option>
-                            <option>Rent</option>
-                            <option>Utilities</option>
-                        </select>
+                        <x-searchable-select wire:model="expense_category" class="rounded-0 erp-input" placeholder="General">
+                            <option value="General">General</option>
+                            <option value="Salary">Salary</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Utilities">Utilities</option>
+                        </x-searchable-select>
                     </div>
                     <div class="col-6">
                         <label class="erp-label">PAYMENT MODE</label>
-                        <select wire:model="expense_payment_method" class="form-select form-select-sm rounded-0 erp-input">
-                            <option>Cash</option>
-                            <option>Bank/UPI</option>
-                        </select>
+                        <x-searchable-select wire:model="expense_payment_method" class="rounded-0 erp-input" placeholder="Cash">
+                            <option value="Cash">Cash</option>
+                            <option value="Bank/UPI">Bank/UPI</option>
+                        </x-searchable-select>
                     </div>
                     <div class="col-12">
                         <label class="erp-label">REMARK / DESCRIPTION</label>

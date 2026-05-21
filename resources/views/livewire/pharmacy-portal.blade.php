@@ -151,12 +151,12 @@
 
             <div class="col-md-6">
                 <label class="erp-label">SELECT MEDICINE *</label>
-                <select wire:model="selectedMedicineId" class="form-select form-select-sm rounded-0 erp-input" required>
+                <x-searchable-select wire:model="selectedMedicineId" class="rounded-0 erp-input" required placeholder="— choose medicine —">
                     <option value="">— choose medicine —</option>
                     @foreach($medicines as $m)
                         <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->power_mg }}) — {{ $m->brand_name }}</option>
                     @endforeach
-                </select>
+                </x-searchable-select>
                 @error('selectedMedicineId') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 

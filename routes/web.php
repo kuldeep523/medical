@@ -51,6 +51,11 @@ Route::middleware([
         return view('sr-expiry.index');
     })->name('sr-expiry.index');
 
+    // P/R Expiry
+    Route::get('/pr-expiry', function () {
+        return view('pr-expiry.index');
+    })->name('pr-expiry.index');
+
     // Receipts
     Route::get('/receipts', function () {
         return view('receipts.index');

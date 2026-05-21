@@ -13,42 +13,42 @@
         <div class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="erp-label">ACCOUNT TYPE</label>
-                <select wire:model.live="accountType" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                <x-searchable-select wire:model.live="accountType" class="rounded-0 border-secondary border-opacity-50" placeholder="Distributor / Supplier Ledger">
                     <option value="supplier">Distributor / Supplier Ledger</option>
                     <option value="customer">Patient / Customer Ledger</option>
                     <option value="expense">Expense Category Ledger</option>
-                </select>
+                </x-searchable-select>
             </div>
 
             @if($accountType === 'supplier')
                 <div class="col-md-3">
                     <label class="erp-label">SELECT SUPPLIER *</label>
-                    <select wire:model.live="supplierId" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                    <x-searchable-select wire:model.live="supplierId" class="rounded-0 border-secondary border-opacity-50" placeholder="-- Choose Supplier --">
                         <option value="">-- Choose Supplier --</option>
                         @foreach($suppliers as $sup)
                             <option value="{{ $sup->id }}">{{ $sup->name }}</option>
                         @endforeach
-                    </select>
+                    </x-searchable-select>
                 </div>
             @elseif($accountType === 'customer')
                 <div class="col-md-3">
                     <label class="erp-label">SELECT CUSTOMER *</label>
-                    <select wire:model.live="customerName" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                    <x-searchable-select wire:model.live="customerName" class="rounded-0 border-secondary border-opacity-50" placeholder="-- Choose Customer --">
                         <option value="">-- Choose Customer --</option>
                         @foreach($customers as $cust)
                             <option value="{{ $cust }}">{{ $cust }}</option>
                         @endforeach
-                    </select>
+                    </x-searchable-select>
                 </div>
             @elseif($accountType === 'expense')
                 <div class="col-md-3">
                     <label class="erp-label">EXPENSE CATEGORY</label>
-                    <select wire:model.live="expenseCategory" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                    <x-searchable-select wire:model.live="expenseCategory" class="rounded-0 border-secondary border-opacity-50" placeholder="All Expense Categories">
                         <option value="all">All Expense Categories</option>
                         @foreach($expenseCategories as $cat)
                             <option value="{{ $cat }}">{{ $cat }}</option>
                         @endforeach
-                    </select>
+                    </x-searchable-select>
                 </div>
             @endif
 

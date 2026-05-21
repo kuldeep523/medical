@@ -50,21 +50,21 @@
                        placeholder="Search by Supplier/Vendor Name or Bill No...">
             </div>
             <div style="width: 160px;">
-                <select wire:model.live="statusFilter" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                <x-searchable-select wire:model.live="statusFilter" class="rounded-0 border-secondary border-opacity-50" placeholder="Pending Dues Only">
                     <option value="pending">Pending Dues Only</option>
                     <option value="cleared">Fully Cleared Only</option>
-                    <option value="all">All Transactions</option>
-                </select>
+                    <option value="all">All Purchases</option>
+                </x-searchable-select>
             </div>
             <div style="width: 180px;">
-                <select wire:model.live="paymentMethodFilter" class="form-select form-select-sm rounded-0 border-secondary border-opacity-50">
+                <x-searchable-select wire:model.live="paymentMethodFilter" class="rounded-0 border-secondary border-opacity-50" placeholder="All Payment Methods">
                     <option value="all">All Payment Methods</option>
                     <option value="Cash">Cash</option>
                     <option value="Online">Online</option>
                     <option value="Card">Card</option>
                     <option value="UPI">UPI</option>
                     <option value="Bank">Bank Transfer</option>
-                </select>
+                </x-searchable-select>
             </div>
         </div>
         <div class="text-muted pe-2" style="font-size: 10px;">
@@ -235,13 +235,13 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="erp-label">PAYMENT MODE</label>
-                                        <select wire:model="paymentMethod" class="form-select form-select-sm rounded-0 erp-input">
+                                        <x-searchable-select wire:model="paymentMethod" class="rounded-0 erp-input" placeholder="Cash">
                                             <option value="Cash">Cash</option>
                                             <option value="Online">Online</option>
                                             <option value="Card">Card</option>
                                             <option value="UPI">UPI</option>
                                             <option value="Bank">Bank Transfer</option>
-                                        </select>
+                                        </x-searchable-select>
                                     </div>
                                     <div class="col-md-3">
                                         <button wire:click="recordPartialPayment({{ $selectedPurchase->id }})" class="btn btn-success w-100 py-1 fw-bold border-0 text-white rounded-0" style="font-size: 10px; height:31px;">
