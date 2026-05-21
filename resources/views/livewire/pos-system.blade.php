@@ -69,7 +69,7 @@
                     <a href="{{ route('doctors.index') }}" target="_blank"
                        title="Add new doctor"
                        class="text-success fw-bold text-decoration-none flex-shrink-0"
-                       style="font-size:14px;line-height:1;">＋</a>
+                       style="font-size:14px;line-height:1;">＋(Add Doctor)</a>
                 </div>
                 <div class="col-4 d-flex align-items-center justify-content-end pe-2">
                     <span class="lbl" style="width:50px;">Bill No:</span>
@@ -121,7 +121,7 @@
                 </div>
                 <div class="col-6 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Reg. No.:</span>
-                    <input type="text" wire:model="patient_reg_no" class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;" placeholder="Registration No">
+                    <input type="text" wire:model="doctor_register_no"  class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;" placeholder="{{ $lastSale ? 'Auto-filled' : 'Registration No' }}">
                 </div>
             </div>
         </div>
@@ -157,7 +157,7 @@
                         @endphp
                         <tr class="align-middle" style="height:22px;">
                             <td class="text-start ps-2 fw-bold border-end border-bottom">
-                                {{ $item['name'] }}
+                                {{ $item['name'] }} 
                                 @php
                                     $itemUps = $item['units_per_strip'] ?? 1;
                                     $stripPriceDisplay = $itemUps > 1 ? round(($item['unit_price'] ?? $item['price'] ?? 0) * $itemUps, 2) : null;

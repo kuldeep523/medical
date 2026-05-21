@@ -280,9 +280,15 @@
     {{-- ════════════════════════════════════════════════════ --}}
     @elseif($activeView === 'batches')
         <div class="row g-0">
-            {{-- Left: Add batch form --}}
+            {{-- Left: Add/Edit batch form --}}
             <div class="col-md-4 border-end p-3 bg-light">
-                <div class="fw-bold mb-2 text-primary pb-1 border-bottom" style="font-size:11px;">ADD BATCH — {{ $name }}</div>
+                <div class="fw-bold mb-2 text-primary pb-1 border-bottom" style="font-size:11px;">
+                    @if($editingBatchId)
+                        EDIT BATCH — {{ $name }}
+                    @else
+                        ADD BATCH — {{ $name }}
+                    @endif
+                </div>
                 <form wire:submit.prevent="saveBatch" class="row g-2">
                     <div class="col-12">
                         <label class="erp-label">BATCH NO *</label>
@@ -311,9 +317,20 @@
                     </div>
                     <div class="col-12 mt-2">
                         <button type="submit" class="erp-btn-primary w-100" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="saveBatch">ADD BATCH</span>
+                            <span wire:loading.remove wire:target="saveBatch">
+                                @if($editingBatchId)
+                                    UPDATE BATCH
+                                @else
+                                    ADD BATCH
+                                @endif
+                            </span>
                             <span wire:loading wire:target="saveBatch">Saving…</span>
                         </button>
+                        @if($editingBatchId)
+                            <button type="button" wire:click="cancelEditBatch" class="erp-btn-secondary w-100 mt-2" style="padding: 2px 20px;">
+                                CANCEL EDIT
+                            </button>
+                        @endif
                     </div>
                 </form>
             </div>
@@ -330,7 +347,7 @@
                                 <th>QTY</th>
                                 <th>PURCHASE</th>
                                 <th>MRP</th>
-                                <th style="width:70px;">DELETE</th>
+                                <th style="width:90px;">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -353,12 +370,24 @@
                                             <div class="text-muted" style="font-size: 10px;">(₹{{ number_format($b->sales_price, 2) }}/tab)</div>
                                         @endif
                                     </td>
-                                    <td>
-                                        <button wire:click="deleteBatch({{ $b->id }})"
-                                                wire:confirm="Delete batch {{ $b->batch_no }}?"
-                                                class="btn btn-link btn-sm text-danger p-0 border-0">
+                                    <td class="d-flex align-items-center gap-2 justify-content-center">
+    
+                                        <button 
+                                            type="button"
+                                            wire:click="editBatch({{ $b->id }})"
+                                            class="btn btn-link btn-sm text-primary p-0 border-0 text-decoration-none">
+                                            <i class="bi bi-pen-fill"></i>
+                                        </button>
+
+                                        <button 
+                                            type="button"
+                                            wire:click="deleteBatch({{ $b->id }})"
+                                            wire:confirm="Delete batch {{ $b->batch_no }}?"
+                                            class="btn btn-link btn-sm text-danger p-0 border-0 text-decoration-none">
+                                            
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
+
                                     </td>
                                 </tr>
                             @empty

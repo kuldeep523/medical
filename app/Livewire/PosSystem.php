@@ -42,6 +42,7 @@ class PosSystem extends Component
     public $doctor_id       = null;   // FK to doctors table
     public $doctor_name     = '';     // fallback free-text
     public $doctor_number   = '';
+    public $doctor_register_no   = '';
 
     // Daily tracking
     public $dailyRevenue = 0;
@@ -73,11 +74,13 @@ class PosSystem extends Component
             if ($doc) {
                 $this->doctor_name   = $doc->name;
                 $this->doctor_number = $doc->phone ?? '';
+                $this->doctor_register_no = $doc->registration_no ?? '';
                 return;
             }
         }
         $this->doctor_name   = '';
         $this->doctor_number = '';
+        $this->doctor_register_no = '';
     }
 
     // ─────────────────────────────────────────────

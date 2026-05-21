@@ -34,6 +34,7 @@ class PharmacyPortal extends Component
     public $batch_quantity;
     public $batch_purchase_price;
     public $batch_sales_price;
+    public $editingBatchId = null;
 
     // Stock-In inputs
     public $selectedMedicineId;
@@ -64,6 +65,7 @@ class PharmacyPortal extends Component
             'batch_quantity', 'batch_purchase_price', 'batch_sales_price',
             'selectedMedicineId', 'stockInBatchNo', 'stockInExpiry',
             'stockInQuantity', 'stockInPrice', 'stockInSalesPrice', 'vendor_name',
+            'editingBatchId',
         ]);
         $this->adjustmentType = 'add';
         $this->resetValidation();
@@ -235,6 +237,33 @@ class PharmacyPortal extends Component
     // ─────────────────────────────────────────────
     // BATCH MANAGEMENT (from Batches view)
     // ─────────────────────────────────────────────
+    public function editBatch($batchId)
+    {
+        $batch = MedicineBatch::whereHas('medicine', function ($query) {
+            $query->where('store_id', auth()->user()->store_id);
+        })->findOrFail($batchId);
+
+        $this->editingBatchId = $batch->id;
+        $this->batch_no = $batch->batch_no;
+        $this->batch_expiry_date = date('Y-m-d', strtotime($batch->expiry_date));
+        $this->batch_quantity = $batch->quantity;
+
+        $medicine = Medicine::where('store_id', auth()->user()->store_id)->findOrFail($this->medId);
+        $unitsPerStrip = max(1, $medicine->units_per_strip);
+
+        $this->batch_purchase_price = $batch->purchase_price ? round($batch->purchase_price * $unitsPerStrip, 2) : 0;
+        $this->batch_sales_price = $batch->sales_price ? round($batch->sales_price * $unitsPerStrip, 2) : 0;
+
+        $this->resetValidation();
+    }
+
+    public function cancelEditBatch()
+    {
+        $this->editingBatchId = null;
+        $this->reset(['batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price']);
+        $this->resetValidation();
+    }
+
     public function saveBatch()
     {
         $this->validate([
@@ -251,38 +280,63 @@ class PharmacyPortal extends Component
         $perUnitPurchasePrice = $this->batch_purchase_price ? ($this->batch_purchase_price / $unitsPerStrip) : 0;
         $perUnitSalesPrice = $this->batch_sales_price ? ($this->batch_sales_price / $unitsPerStrip) : 0;
 
-        $existingBatch = MedicineBatch::where('medicine_id', $medicine->id)
-            ->where('batch_no', $this->batch_no)
-            ->first();
+        if ($this->editingBatchId) {
+            $batch = MedicineBatch::where('medicine_id', $medicine->id)->findOrFail($this->editingBatchId);
 
-        if ($existingBatch) {
-            $existingBatch->quantity += $this->batch_quantity;
-            if ($this->batch_purchase_price !== null && $this->batch_purchase_price !== '') {
-                $existingBatch->purchase_price = $perUnitPurchasePrice;
+            $existsAnother = MedicineBatch::where('medicine_id', $medicine->id)
+                ->where('batch_no', $this->batch_no)
+                ->where('id', '!=', $this->editingBatchId)
+                ->exists();
+
+            if ($existsAnother) {
+                session()->flash('error', "Another batch with number '{$this->batch_no}' already exists for this medicine.");
+                return;
             }
-            if ($this->batch_sales_price !== null && $this->batch_sales_price !== '') {
-                $existingBatch->sales_price = $perUnitSalesPrice;
-            }
-            $existingBatch->save();
-            session()->flash('status', "Batch '{$this->batch_no}' quantity updated.");
-        } else {
-            MedicineBatch::create([
-                'medicine_id'    => $medicine->id,
+
+            $batch->update([
                 'batch_no'       => $this->batch_no,
                 'expiry_date'    => $this->batch_expiry_date,
                 'quantity'       => $this->batch_quantity,
                 'purchase_price' => $perUnitPurchasePrice,
                 'sales_price'    => $perUnitSalesPrice,
-                'reorder_point'  => $medicine->reorder_point ?? 10,
-                'user_id'        => auth()->id(),
-                'store_id'       => auth()->user()->store_id,
             ]);
-            session()->flash('status', "New batch '{$this->batch_no}' created.");
+
+            session()->flash('status', "Batch '{$this->batch_no}' updated successfully.");
+            $this->editingBatchId = null;
+        } else {
+            $existingBatch = MedicineBatch::where('medicine_id', $medicine->id)
+                ->where('batch_no', $this->batch_no)
+                ->first();
+
+            if ($existingBatch) {
+                $existingBatch->quantity += $this->batch_quantity;
+                if ($this->batch_purchase_price !== null && $this->batch_purchase_price !== '') {
+                    $existingBatch->purchase_price = $perUnitPurchasePrice;
+                }
+                if ($this->batch_sales_price !== null && $this->batch_sales_price !== '') {
+                    $existingBatch->sales_price = $perUnitSalesPrice;
+                }
+                $existingBatch->save();
+                session()->flash('status', "Batch '{$this->batch_no}' quantity updated.");
+            } else {
+                MedicineBatch::create([
+                    'medicine_id'    => $medicine->id,
+                    'batch_no'       => $this->batch_no,
+                    'expiry_date'    => $this->batch_expiry_date,
+                    'quantity'       => $this->batch_quantity,
+                    'purchase_price' => $perUnitPurchasePrice,
+                    'sales_price'    => $perUnitSalesPrice,
+                    'reorder_point'  => $medicine->reorder_point ?? 10,
+                    'user_id'        => auth()->id(),
+                    'store_id'       => auth()->user()->store_id,
+                ]);
+                session()->flash('status', "New batch '{$this->batch_no}' created.");
+            }
         }
 
         // Stay on batches view, refresh
         $savedMedId = $this->medId;
-        $this->reset(['batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price']);
+        $this->reset(['batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'editingBatchId']);
         $this->medId = $savedMedId;
         $this->resetValidation();
     }
