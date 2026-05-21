@@ -47,6 +47,8 @@
 
             <a href="{{ route('dashboard') }}" class="erp-action-btn green"><i class="bi bi-grid-fill"></i> Dashboard</a>
             <button class="erp-action-btn navy">SEARCH MENU</button>
+            <a href="{{ route('pharmacy.index') }}" class="erp-action-btn blue">SEARCH Medicine</a>
+       
         </div>
     </div>
 
