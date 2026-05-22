@@ -25,7 +25,7 @@
             @if(count($lowStock) > 0)
                 <div class="mt-1" style="max-height:36px;overflow:auto;">
                     @foreach($lowStock as $s)
-                        <span class="badge bg-white border text-danger rounded-0 me-1" style="font-size:10px;">{{ $s->name }} ({{ $s->total_stock }})</span>
+                        <span class="badge bg-white border text-danger rounded-0 me-1 erp-badge-truncate" style="font-size:10px;" title="{{ $s->name }} ({{ $s->total_stock }})">{{ $s->name }} ({{ $s->total_stock }})</span>
                     @endforeach
                 </div>
             @endif
@@ -41,7 +41,7 @@
             @if(count($upcomingExpiry) > 0)
                 <div class="mt-1" style="max-height:36px;overflow:auto;">
                     @foreach($upcomingExpiry as $e)
-                        <span class="badge bg-white border rounded-0 me-1" style="font-size:10px;color:#b45309;">{{ $e->medicine->name ?? '?' }} ({{ date('M Y', strtotime($e->expiry_date)) }})</span>
+                        <span class="badge bg-white border rounded-0 me-1 erp-badge-truncate" style="font-size:10px;color:#b45309;" title="{{ $e->medicine->name ?? '?' }} ({{ date('M Y', strtotime($e->expiry_date)) }})">{{ $e->medicine->name ?? '?' }} ({{ date('M Y', strtotime($e->expiry_date)) }})</span>
                     @endforeach
                 </div>
             @endif
@@ -77,7 +77,7 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-bordered table-sm table-hover m-0" style="font-size:11px;vertical-align:middle;">
+            <table class="table table-bordered table-sm table-hover m-0" style="font-size:11px;vertical-align:middle; table-layout: fixed; width: 100%; min-width: 960px;">
                 <thead class="text-white text-center" style="background:#008080;">
                     <tr>
                         <th style="width:35px;">#</th>
@@ -95,12 +95,12 @@
                     @forelse($medicines as $i => $med)
                         <tr class="{{ $med->total_stock <= $med->reorder_point ? 'erp-low-stock' : '' }}">
                             <td class="text-center text-muted">{{ $i + 1 }}</td>
-                            <td>
+                            <td class="text-break">
                                 <div class="fw-bold">{{ $med->name }}</div>
                                 <div class="text-muted" style="font-size:10px;">{{ $med->brand_name }}</div>
                             </td>
-                            <td class="text-primary fw-semibold">{{ $med->rx_salt }}</td>
-                            <td>{{ $med->purpose ?: '—' }}</td>
+                            <td class="text-primary fw-semibold text-break">{{ $med->rx_salt }}</td>
+                            <td class="text-break">{{ $med->purpose ?: '—' }}</td>
                             <td class="text-center fw-bold">{{ $med->power_mg }}</td>
                             <td class="text-center">
                                 <span class="badge w-100 rounded-0 {{ $med->total_stock <= $med->reorder_point ? 'bg-danger' : 'bg-success' }}">
@@ -116,7 +116,7 @@
                                 @else —
                                 @endif
                             </td>
-                            <td class="text-center text-muted" style="font-size:10px;">
+                            <td class="text-center text-muted text-break" style="font-size:10px;">
                                 {{ $med->location_section }} / {{ $med->location_column }}
                             </td>
                             <td class="text-center">
@@ -282,7 +282,7 @@
         <div class="row g-0">
             {{-- Left: Add/Edit batch form --}}
             <div class="col-md-4 border-end p-3 bg-light">
-                <div class="fw-bold mb-2 text-primary pb-1 border-bottom" style="font-size:11px;">
+                <div class="fw-bold mb-2 text-primary pb-1 border-bottom text-break" style="font-size:11px;">
                     @if($editingBatchId)
                         EDIT BATCH — {{ $name }}
                     @else
@@ -353,7 +353,7 @@
                         <tbody>
                             @forelse($batchesList as $b)
                                 <tr class="text-center">
-                                    <td class="fw-bold">{{ $b->batch_no }}</td>
+                                    <td class="fw-bold text-break">{{ $b->batch_no }}</td>
                                     <td class="{{ strtotime($b->expiry_date) < strtotime('+90 days') ? 'text-danger fw-bold' : '' }}">
                                         {{ date('d-m-Y', strtotime($b->expiry_date)) }}
                                     </td>
@@ -446,5 +446,6 @@
         .btn-outline-teal:hover { background: #008080; color: #fff; }
         .table-hover tbody tr:hover { background-color: #f1f5f9 !important; }
         .pharmacy-container { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+        .erp-badge-truncate { display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
     </style>
 </div>

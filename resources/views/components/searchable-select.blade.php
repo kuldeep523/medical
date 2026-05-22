@@ -92,7 +92,7 @@
                         class="btn btn-sm w-100 text-start rounded-0 py-1 px-2 border-0 d-block select-option-btn"
                         :class="value == opt.value ? 'active-option' : ''"
                         style="font-size: 11px; font-weight: 500; height: 26px; line-height: 1.2;">
-                    <span x-text="opt.text"></span>
+                    <span x-text="opt.text" class="text-truncate d-block" :title="opt.text"></span>
                 </button>
             </template>
             <div x-show="optionsList.filter(o => o.text.toLowerCase().includes(search.toLowerCase())).length === 0" 
