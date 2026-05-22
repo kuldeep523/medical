@@ -1,4 +1,4 @@
-<div x-data="{
+<div class="h-100" x-data="{
         isFs: true,
         highlightedIndex: -1,
         resultsCount: 0,
@@ -143,7 +143,7 @@
         </div>
 
         <!-- Main Table -->
-        <div class="flex-grow-1 overflow-auto bg-white position-relative">
+        <div class="flex-grow-1 overflow-auto bg-white position-relative" style="min-height: 0;">
             <table class="table table-bordered table-sm m-0 text-center"
                    style="font-size:11px;table-layout:fixed;border-collapse:collapse;">
                 <colgroup>
@@ -299,7 +299,7 @@
                     </tr>
 
                     <!-- Empty fill rows -->
-                    @for($i = count($cart) + 1; $i < 18; $i++)
+                    @for($i = count($cart) + 1; $i < 12; $i++)
                         <tr style="height:22px;">
                             <td class="border-end border-bottom">&nbsp;</td>
                             <td class="border-end border-bottom"></td>
@@ -423,7 +423,7 @@
             width: 100vw !important; height: 100vh !important;
             z-index: 99999 !important; border: none !important;
         }
-        .pos-windowed { width: 100%; height: calc(100vh - 130px); min-height: 400px; }
+        .pos-windowed { width: 100%; height: 100%; min-height: 400px; }
         .lbl { color: #008080; font-weight: 700; margin-right: 4px; white-space: nowrap; }
         input:focus { outline: none !important; box-shadow: none !important; background: #fffdf0 !important; }
         .table-bordered td { border: 1px solid #ccc !important; }
