@@ -143,6 +143,7 @@ class SupplierManager extends Component
             'bill_number' => 'required',
             'bill_date' => 'required|date',
             'payment_mode' => 'required',
+            'paid_amount' => 'nullable|numeric|min:0',
         ]);
 
         if (empty($this->purchaseItems)) {
@@ -158,6 +159,7 @@ class SupplierManager extends Component
         }
 
         $supplier = Supplier::findOrFail($this->supplier_id);
+        $paid = (float) ($this->paid_amount ?: 0);
 
         // 1. Create Purchase Record
         $purchase = Purchase::create([
@@ -165,7 +167,7 @@ class SupplierManager extends Component
             'bill_number' => $this->bill_number,
             'bill_date' => $this->bill_date,
             'total_amount' => $totalBill,
-            'paid_amount' => $this->paid_amount,
+            'paid_amount' => $paid,
             'payment_mode' => $this->payment_mode,
             'user_id' => auth()->id(),
             'store_id' => auth()->user()->store_id,
@@ -188,14 +190,14 @@ class SupplierManager extends Component
                 'purchase_id' => $purchase->id,
                 'vendor_name' => $supplier->name,
                 'vendor_bill_path' => $billPath,
-                'amount_paid_to_vendor' => $this->paid_amount,
+                'amount_paid_to_vendor' => $paid,
                 'user_id' => auth()->id(),
                 'store_id' => auth()->user()->store_id,
             ]);
         }
 
         // 3. Update Supplier Balance if Due
-        $due = $totalBill - $this->paid_amount;
+        $due = $totalBill - $paid;
         if ($due > 0) {
             $supplier = Supplier::findOrFail($this->supplier_id);
             $supplier->increment('current_balance', $due);
@@ -211,6 +213,7 @@ class SupplierManager extends Component
     {
         $this->validate([
             'paymentAmount' => 'required|numeric|min:1',
+            'paymentMode' => 'required',
             'paymentNote' => 'nullable|string',
         ]);
 

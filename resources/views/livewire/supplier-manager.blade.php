@@ -11,6 +11,15 @@
             <i class="bi bi-exclamation-octagon-fill me-1"></i> {{ session('error') }}
         </div>
     @endif
+    @if ($errors->any())
+        <div class="erp-alert erp-alert-danger">
+            <ul class="mb-0 ps-3">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     {{-- ── Module Header ────────────────────────────────── --}}
     <div class="d-flex justify-content-between align-items-center px-3 text-white" style="background:#004040;height:30px;">
@@ -117,18 +126,22 @@
                             <option value="{{ $s->id }}">{{ $s->name }}</option>
                         @endforeach
                     </x-searchable-select>
+                    @error('supplier_id') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-2">
                     <label class="erp-label">BILL NUMBER *</label>
                     <input type="text" wire:model="bill_number" class="form-control form-control-sm rounded-0 erp-input" required />
+                    @error('bill_number') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-2">
                     <label class="erp-label">BILL DATE *</label>
                     <input type="date" wire:model="bill_date" class="form-control form-control-sm rounded-0 erp-input" required />
+                    @error('bill_date') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-2">
                     <label class="erp-label">BILL FILE (PDF/IMG)</label>
                     <input type="file" wire:model="bill_file" class="form-control form-control-sm rounded-0 erp-input" />
+                    @error('bill_file') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
             </div>
         </div>
@@ -148,34 +161,42 @@
                             <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->power_mg }})</option>
                         @endforeach
                     </x-searchable-select>
+                    @error('selectedMedId') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">BATCH *</label>
                     <input type="text" wire:model="batchNo" class="form-control form-control-sm rounded-0 erp-input" />
+                    @error('batchNo') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-2">
                     <label class="erp-label">EXPIRY *</label>
                     <input type="date" wire:model="expiryDate" class="form-control form-control-sm rounded-0 erp-input" />
+                    @error('expiryDate') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">QTY ({{ $selUnits > 1 ? 'strips' : 'units' }})</label>
                     <input type="number" wire:model="qty" class="form-control form-control-sm rounded-0 erp-input" />
+                    @error('qty') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">P. PRICE {{ $selUnits > 1 ? '/ STRIP' : '' }}</label>
                     <input type="number" wire:model="pPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
+                    @error('pPrice') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">MRP {{ $selUnits > 1 ? '/ STRIP' : '' }}</label>
                     <input type="number" wire:model="sPrice" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
+                    @error('sPrice') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">DIS %</label>
                     <input type="number" wire:model="discPercent" class="form-control form-control-sm rounded-0 erp-input" />
+                    @error('discPercent') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">GST %</label>
                     <input type="number" wire:model="gstPercent" class="form-control form-control-sm rounded-0 erp-input" />
+                    @error('gstPercent') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <button wire:click="addItem" class="erp-btn-primary w-100" style="height:24px;padding:0;">ADD ITEM</button>
@@ -234,6 +255,7 @@
                 <div class="col-md-2">
                     <label class="erp-label">PAID AMOUNT (₹)</label>
                     <input type="number" wire:model="paid_amount" class="form-control form-control-sm rounded-0 erp-input" step="0.01" />
+                    @error('paid_amount') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-2">
                     <label class="erp-label">PAYMENT MODE</label>
@@ -242,6 +264,7 @@
                         <option value="UPI">UPI / Bank</option>
                         <option value="Credit">Credit (Full Due)</option>
                     </x-searchable-select>
+                    @error('payment_mode') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-5 text-end">
                     <button wire:click="savePurchase" class="erp-btn-primary" style="padding:8px 30px; font-size:12px;">FINALIZE PURCHASE BILL</button>
@@ -351,6 +374,7 @@
         .erp-alert          { padding: 4px 12px; font-size: 11px; font-weight: 600; border-left: 3px solid; margin: 0; }
         .erp-alert-success  { background: #dcfce7; color: #166534; border-color: #22c55e; }
         .erp-alert-danger   { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+        .erp-error          { color: #dc2626; font-size: 10px; margin-top: 2px; display: block; }
         .erp-hdr-btn        { background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 0 10px; font-size: 10px; font-weight: 700; height: 20px; cursor: pointer; transition: background .15s; margin-top: 3px; }
         .erp-hdr-btn:hover, .erp-hdr-btn.active { background: rgba(255,255,255,.2); border-color: #fff; }
         .erp-form-header    { background: #f1f5f9; border-bottom: 1px solid #dde; padding: 6px 12px; font-size: 10px; font-weight: 700; color: #004040; letter-spacing: .5px; text-uppercase: true; }
