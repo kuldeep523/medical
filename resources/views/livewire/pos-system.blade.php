@@ -32,7 +32,7 @@
          style="font-family:'Segoe UI',Tahoma,sans-serif;background:#fff;border:2px solid #008080;">
 
         <!-- Top Header -->
-        <div class="d-flex justify-content-between align-items-center px-2 text-white flex-shrink-0"
+        <div class="d-flex justify-content-between align-items-center px-2 text-white flex-shrink-0 pos-top-header"
              style="background:#004040;height:24px;font-size:11px;border-bottom:1px solid #000;">
             <span class="fw-bold">SALE ENTRY</span>
             <div class="d-flex gap-3 align-items-center">
@@ -47,9 +47,9 @@
         </div>
 
         <!-- Info Section -->
-        <div class="flex-shrink-0 border-bottom" style="background:#f0f4f5;font-size:11px;">
+        <div class="flex-shrink-0 border-bottom pos-info-section" style="background:#f0f4f5;font-size:11px;">
             <!-- Row 1 -->
-            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
+            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25 pos-info-row">
                 <div class="col-4 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Patient Name:</span>
                     <input type="text" wire:model="patient_name" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="Patient Name">
@@ -78,7 +78,7 @@
                 </div>
             </div>
             <!-- Row 2 -->
-            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
+            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25 pos-info-row">
                 <div class="col-4 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Patient Mob:</span>
                     <input type="text" wire:model="customer_phone" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;" placeholder="Mobile">
@@ -102,7 +102,7 @@
                 </div>
             </div>
             <!-- Row 3 -->
-            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25">
+            <div class="row g-0 p-1 border-bottom border-secondary border-opacity-25 pos-info-row">
                 <div class="col-4 d-flex align-items-center ">
                     <span class="lbl" style="width:85px;">Order Type:</span>
                     <x-searchable-select wire:model="order_type" class="border-0 bg-transparent p-0 fw-bold" style="font-size:11px;width:100px;color:#008080;" placeholder="Walk-in">
@@ -121,7 +121,7 @@
                 </div>
             </div>
             <!-- Row 4 -->
-            <div class="row g-0 p-1">
+            <div class="row g-0 p-1 pos-info-row">
                 <div class="col-12 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Reg. No.:</span>
                     <input type="text" wire:model="doctor_register_no"  class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;" placeholder="{{ $lastSale ? 'Auto-filled' : 'Registration No' }}">
@@ -130,7 +130,7 @@
         </div>
 
         <!-- Column Headers -->
-        <div class="row g-0 text-white text-center fw-bold flex-shrink-0"
+        <div class="row g-0 text-white text-center fw-bold flex-shrink-0 pos-col-headers"
              style="font-size:11px;background:#008080;border-bottom:1px solid #000;">
             <div class="col-3 border-end border-white border-opacity-50 p-1">PRODUCT</div>
             <div class="col-1 border-end border-white border-opacity-50 p-1">PACK</div>
@@ -225,7 +225,7 @@
                     @endforeach
 
                     <!-- Search / Entry Row -->
-                    <tr style="height:26px;background:#fffdf0;">
+                    <tr class="pos-search-row" style="height:26px;background:#fffdf0;">
                         <td class="p-0 position-relative border-end border-bottom" style="overflow:visible;">
                             <input type="text"
                                    id="pos-search"
@@ -299,8 +299,8 @@
                     </tr>
 
                     <!-- Empty fill rows -->
-                    @for($i = count($cart) + 1; $i < 12; $i++)
-                        <tr style="height:22px;">
+                    @for($i = count($cart) + 1; $i < 8; $i++)
+                        <tr class="pos-empty-row" style="height:22px;">
                             <td class="border-end border-bottom">&nbsp;</td>
                             <td class="border-end border-bottom"></td>
                             <td class="border-end border-bottom"></td>
@@ -316,7 +316,7 @@
         </div>
 
         <!-- Bottom Summary -->
-        <div class="flex-shrink-0 border-top border-dark" style="background:#fff;">
+        <div class="flex-shrink-0 border-top border-dark pos-summary-section" style="background:#fff;">
             <div class="row g-0">
                 <!-- Item Info -->
                 <div class="col-8 p-2 border-end border-secondary border-opacity-50" style="font-size:11px;">
@@ -399,7 +399,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex-shrink-0 text-white px-2 d-flex justify-content-between align-items-center"
+        <div class="flex-shrink-0 text-white px-2 d-flex justify-content-between align-items-center pos-footer"
              style="background:#004040;height:24px;font-size:11px;">
             <div class="d-flex gap-4">
                 <span>F1-Help</span><span>F2-Patient</span><span>F5-Online Order</span>
@@ -433,6 +433,29 @@
         }
         .pos-cart-row:hover {
             background-color: rgba(0, 128, 128, 0.05) !important;
+        }
+
+        @media (max-height: 600px) {
+            .pos-windowed { min-height: 250px !important; }
+            .pos-top-header { height: 20px !important; font-size: 10px !important; }
+            .pos-top-header button { height: 14px !important; line-height: 12px !important; font-size: 9px !important; }
+            .pos-info-section { font-size: 10px !important; }
+            .pos-info-row { padding: 1px 0 !important; }
+            .pos-info-row input, .pos-info-row select { font-size: 10px !important; height: 16px !important; padding: 0 !important; }
+            .pos-col-headers { font-size: 10px !important; }
+            .pos-cart-row { height: 18px !important; }
+            .pos-cart-row td { font-size: 10px !important; padding: 0 1px !important; }
+            .pos-cart-row input { height: 18px !important; font-size: 10px !important; }
+            .pos-cart-row select { height: 18px !important; font-size: 10px !important; }
+            .pos-empty-row { height: 18px !important; }
+            .pos-search-row { height: 20px !important; }
+            .pos-search-row input { height: 20px !important; font-size: 10px !important; }
+            .pos-summary-section { font-size: 10px !important; }
+            .pos-summary-section input { height: 16px !important; font-size: 10px !important; width: 30px !important; }
+            .pos-summary-section button { height: 18px !important; font-size: 10px !important; padding: 0 8px !important; }
+            .pos-summary-section .fs-5 { font-size: 12px !important; }
+            .pos-footer { height: 20px !important; font-size: 10px !important; }
+            .pos-footer button { padding: 0 4px !important; font-size: 9px !important; }
         }
     </style>
 

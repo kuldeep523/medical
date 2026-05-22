@@ -340,3 +340,59 @@ kbd {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-height: 600px) {
+    body, .wrapper {
+        height: 100vh;
+    }
+    .window-bar {
+        height: 24px !important;
+        font-size: 11px !important;
+    }
+    .top-menu-bar {
+        font-size: 11px !important;
+        padding: 1px 6px !important;
+    }
+    .top-menu-item {
+        padding: 2px 6px !important;
+    }
+    .erp-header {
+        padding: 2px 6px !important;
+    }
+    .erp-action-btn {
+        padding: 2px 8px !important;
+        font-size: 10px !important;
+    }
+    .sidebar {
+        width: 170px !important;
+    }
+    .sidebar-btn {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+        margin-bottom: 1px !important;
+    }
+    .right-sidebar {
+        width: 180px !important;
+        padding: 8px !important;
+        font-size: 11px !important;
+    }
+    .right-sidebar h6 {
+        font-size: 11px !important;
+        margin-bottom: 6px !important;
+    }
+    .status-bar {
+        padding: 4px 12px !important;
+        font-size: 11px !important;
+    }
+    .status-bar .small {
+        font-size: 10px !important;
+    }
+    .footer-bar {
+        padding: 3px 12px !important;
+        font-size: 10px !important;
+    }
+    .footer-btn {
+        padding: 1px 8px !important;
+        font-size: 9px !important;
+    }
+}
