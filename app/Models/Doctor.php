@@ -4,10 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\CamelCaseFields;
 
 class Doctor extends Model
 {
-    use HasFactory;
+    use HasFactory, CamelCaseFields;
+
+    protected $camelCaseAttributes = [
+        'name',
+        'specialization',
+        'clinic_name',
+        'clinic_address',
+    ];
 
     protected $fillable = [
         'store_id',

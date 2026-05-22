@@ -33,7 +33,7 @@
         <div class="top-menu-item">Re<u>p</u>orts</div>
         <div class="top-menu-item">Hot <u>K</u>eys</div>
         <div class="top-menu-item">Li<u>n</u>ks</div>
-        <div class="top-menu-item">E<u>x</u>it</div>
+        <div class="top-menu-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">E<u>x</u>it</div>
     </div>
 
     <!-- ERP Action Header -->
@@ -74,7 +74,7 @@
             <a href="#" class="sidebar-btn">Bill Taging</a>
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Daily Analysis (MIS)</a>
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Todays Gross Profit</a>
-            <a href="#" class="sidebar-btn text-danger mt-auto">Exit</a>
+            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="sidebar-btn text-danger mt-auto">Exit</a>
         </div>
 
         <!-- Main Area -->
@@ -155,6 +155,11 @@
             <button class="footer-btn">Graph Tool</button>
         </div>
     </div>
+
+    <!-- Hidden form for logout POST request -->
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
 
 </div>
 
@@ -433,13 +438,14 @@
 
         // Alt+X: Logout
         if (key === 'x') {
-            const logoutForm = document.querySelector('form[action*="logout"]');
-            if (logoutForm) { logoutForm.submit(); }
-            else {
-                // Try Livewire logout or navigate to logout
-                window.location.href = '/logout';
+            const logoutForm = document.getElementById('logout-form') || document.querySelector('form[action*="logout"]');
+            if (logoutForm) { 
+                logoutForm.submit(); 
+                showToast('🔒 Logging out...');
             }
-            showToast('🔒 Logging out...');
+            else {
+                showToast('❌ Logout form not found');
+            }
             return;
         }
 

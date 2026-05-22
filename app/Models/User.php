@@ -10,10 +10,15 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use App\Traits\CamelCaseFields;
 
 class User extends Authenticatable
 {
-    use HasApiTokens;
+    use HasApiTokens, CamelCaseFields;
+
+    protected $camelCaseAttributes = [
+        'name',
+    ];
 
     /** @use HasFactory<UserFactory> */
     use HasFactory;

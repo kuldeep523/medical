@@ -70,7 +70,7 @@
                     <a href="{{ route('doctors.index') }}" target="_blank"
                        title="Add new doctor"
                        class="text-success fw-bold text-decoration-none flex-shrink-0"
-                       style="font-size:14px;line-height:1;">＋(Add Doctor)</a>
+                       style="font-size:14px;line-height:1;">Add Doctor</a>
                 </div>
                 <div class="col-4 d-flex align-items-center justify-content-end pe-2">
                     <span class="lbl" style="width:50px;">Bill No:</span>

@@ -4,10 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\CamelCaseFields;
 
 class PatientReturn extends Model
 {
-    use HasFactory;
+    use HasFactory, CamelCaseFields;
+
+    protected $camelCaseAttributes = [
+        'remarks',
+    ];
 
     protected $fillable = [
         'store_id',

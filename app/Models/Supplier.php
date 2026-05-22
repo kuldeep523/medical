@@ -4,10 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\CamelCaseFields;
 
 class Supplier extends Model
 {
-    use HasFactory;
+    use HasFactory, CamelCaseFields;
+
+    protected $camelCaseAttributes = [
+        'name',
+        'address',
+    ];
 
     protected $fillable = [
         'name',

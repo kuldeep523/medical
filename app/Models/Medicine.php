@@ -4,10 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\CamelCaseFields;
 
 class Medicine extends Model
 {
-    use HasFactory;
+    use HasFactory, CamelCaseFields;
+
+    protected $camelCaseAttributes = [
+        'name',
+        'rx_salt',
+        'purpose',
+        'brand_name',
+        'location_section',
+        'location_column',
+    ];
 
     protected $fillable = [
         'name',

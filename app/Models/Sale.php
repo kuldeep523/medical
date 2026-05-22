@@ -4,10 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\CamelCaseFields;
 
 class Sale extends Model
 {
-    use HasFactory;
+    use HasFactory, CamelCaseFields;
+
+    protected $camelCaseAttributes = [
+        'customer_name',
+        'patient_name',
+        'patient_address',
+        'doctor_name',
+    ];
 
     protected $fillable = [
         'user_id',
