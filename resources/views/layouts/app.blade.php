@@ -56,6 +56,30 @@
     <div class="middle-section d-flex flex-grow-1 overflow-hidden">
         
         <!-- Left Sidebar -->
+        @if(auth()->check() && auth()->user()->isAdmin())
+        {{-- ADMIN SIDEBAR: Only admin portal links --}}
+        <div class="sidebar">
+            <a href="{{ route('admin.dashboard') }}" class="sidebar-btn {{ request()->routeIs('admin.portal') ? 'active' : '' }}">
+                <i class="bi bi-shield-fill-check me-1"></i> Admin Portal
+            </a>
+            <a href="{{ route('admin.dashboard') }}" class="sidebar-btn">
+                <i class="bi bi-shop me-1"></i> Manage Stores
+            </a>
+            <a href="{{ route('admin.dashboard') }}" class="sidebar-btn">
+                <i class="bi bi-people-fill me-1"></i> All Users
+            </a>
+            <a href="{{ route('admin.dashboard') }}" class="sidebar-btn">
+                <i class="bi bi-bar-chart-fill me-1"></i> Reports
+            </a>
+            <a href="{{ route('admin.dashboard') }}" class="sidebar-btn">
+                <i class="bi bi-gear-fill me-1"></i> Settings
+            </a>
+            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="sidebar-btn text-danger mt-auto">
+                <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </a>
+        </div>
+        @else
+        {{-- STORE USER SIDEBAR: Full pharmacy ERP menu --}}
         <div class="sidebar">
             <a href="{{ route('pos.index') }}" class="sidebar-btn {{ request()->routeIs('pos.index') ? 'active' : '' }}">Sale</a>
             <a href="{{ route('suppliers.index') }}" class="sidebar-btn {{ request()->routeIs('suppliers.index') ? 'active' : '' }}">Purchase Invoice</a>
@@ -76,6 +100,7 @@
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Todays Gross Profit</a>
             <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="sidebar-btn text-danger mt-auto">Exit</a>
         </div>
+        @endif
 
         <!-- Main Area -->
         <div class="main flex-grow-1">
@@ -85,6 +110,7 @@
         </div>
 
         <!-- Right Sidebar -->
+        @if(!auth()->check() || !auth()->user()->isAdmin())
         <div class="right-sidebar d-none d-xl-flex">
             <h6>Most viewed reports</h6>
             <a href="#" class="report-link">Operator's</a>
@@ -112,9 +138,11 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
-    <!-- Status Bar -->
+    <!-- Status Bar: only for store users, not admins -->
+    @if(!auth()->check() || !auth()->user()->isAdmin())
     <div class="status-bar">
         <div>
             <div class="fw-bold">{{ auth()->user()->store_name ?? 'ZENMEDIX PHARMACY' }}</div>
@@ -129,6 +157,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Keyboard Footer -->
     <div class="footer-bar">
