@@ -35,7 +35,7 @@ class DashboardStats extends Component
         $totalPayables    = Purchase::where('store_id', $storeId)->whereRaw('paid_amount < total_amount')->sum(DB::raw('total_amount - paid_amount'));
         $pendingSuppliers = Purchase::where('store_id', $storeId)->whereRaw('paid_amount < total_amount')->count();
 
-        $allMedicines      = Medicine::with('batches')->where('store_id', $storeId)->get();
+        $allMedicines      = Medicine::with('batches')->get();
         $lowStockCount     = $allMedicines->filter(fn($m) => $m->total_stock <= $m->reorder_point)->count();
         $expiringSoonCount = MedicineBatch::where('store_id', $storeId)->whereBetween('expiry_date', [now(), now()->addDays(90)])->where('quantity', '>', 0)->count();
         $expiredCount      = MedicineBatch::where('store_id', $storeId)->where('expiry_date', '<', $today)->where('quantity', '>', 0)->whereNull('return_status')->count();

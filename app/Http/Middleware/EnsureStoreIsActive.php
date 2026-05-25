@@ -19,7 +19,7 @@ class EnsureStoreIsActive
         if (Auth::check() && Auth::user()->store_id) {
             $store = Auth::user()->store;
             if ($store && $store->status !== 'active') {
-                Auth::logout();
+                Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return redirect()->route('login')->withErrors(['email' => 'Your store account has been deactivated. Please contact the administrator.']);

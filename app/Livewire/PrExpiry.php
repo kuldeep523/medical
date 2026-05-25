@@ -54,8 +54,7 @@ class PrExpiry extends Component
     {
         $storeId = auth()->user()->store_id;
         
-        $this->medicines = Medicine::where('store_id', $storeId)
-            ->orderBy('name')
+        $this->medicines = Medicine::orderBy('name')
             ->get(['id', 'name', 'units_per_strip'])
             ->toArray();
 

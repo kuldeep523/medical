@@ -100,7 +100,8 @@
                                     <td>
                                         <div class="btn-group btn-group-sm">
                                             <button wire:click="changeTab('ledger', {{ $s->id }})" class="btn btn-outline-teal py-0 px-2">LEDGER</button>
-                                            <button wire:click="editSupplier({{ $s->id }})" class="btn btn-outline-dark py-0 px-2"><i class="bi bi-pencil"></i></button>
+                                            <button wire:click="editSupplier({{ $s->id }})" class="btn btn-outline-dark py-0 px-2" title="Edit Vendor"><i class="bi bi-pencil"></i></button>
+                                            <button onclick="confirm('Are you sure you want to delete this vendor?') || event.stopImmediatePropagation()" wire:click="deleteSupplier({{ $s->id }})" class="btn btn-outline-danger py-0 px-2" title="Delete Vendor"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -288,6 +289,7 @@
                         <th>PAID</th>
                         <th>DUE</th>
                         <th>MODE</th>
+                        <th style="width: 100px;">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -300,6 +302,10 @@
                             <td class="text-success">₹{{ number_format($p->paid_amount, 2) }}</td>
                             <td class="text-danger fw-bold">₹{{ number_format($p->total_amount - $p->paid_amount, 2) }}</td>
                             <td><span class="badge bg-light border text-dark rounded-0">{{ $p->payment_mode }}</span></td>
+                            <td>
+                                <button wire:click="openEditPurchaseModal({{ $p->id }})" class="btn btn-sm btn-outline-primary py-0 px-2 fw-bold" style="font-size:9px;" title="Edit Bill Details"><i class="bi bi-pencil-square"></i></button>
+                                <button onclick="confirm('WARNING: Deleting this purchase will decrement Paracetamol/medicine stock batch quantities and subtract any outstanding due from the supplier ledger. Proceed?') || event.stopImmediatePropagation()" wire:click="deletePurchase({{ $p->id }})" class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold ms-1" style="font-size:9px;" title="Delete Purchase Bill"><i class="bi bi-trash"></i></button>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -327,15 +333,23 @@
                                 <th class="text-start ps-2">DESCRIPTION</th>
                                 <th class="text-end pe-2">DEBIT (+)</th>
                                 <th class="text-end pe-2">CREDIT (-)</th>
+                                <th style="width: 50px;">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($ledgerEntries as $entry)
-                                <tr class="text-center">
+                                <tr class="text-center align-middle">
                                     <td>{{ date('d-m-Y', strtotime($entry['date'])) }}</td>
                                     <td class="text-start ps-2 text-muted">{{ $entry['desc'] }}</td>
                                     <td class="text-end pe-2 fw-bold">{{ $entry['debit'] > 0 ? '₹'.number_format($entry['debit'], 2) : '—' }}</td>
                                     <td class="text-end pe-2 fw-bold text-success">{{ $entry['credit'] > 0 ? '₹'.number_format($entry['credit'], 2) : '—' }}</td>
+                                    <td>
+                                        @if($entry['type'] === 'extra_payment')
+                                            <button onclick="confirm('Delete this ledger payment?') || event.stopImmediatePropagation()" wire:click="deletePayment({{ $entry['id'] }})" class="btn btn-sm btn-link text-danger p-0" style="font-size: 11px; text-decoration: none;"><i class="bi bi-trash"></i></button>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -365,6 +379,50 @@
                         <button type="submit" class="erp-btn-primary w-100">SUBMIT PAYMENT</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ── Edit Purchase Modal ────────────────────────── --}}
+    @if($isEditPurchaseModalOpen)
+        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5); z-index: 1050; font-family:'Segoe UI',Tahoma,sans-serif;">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+                <div class="modal-content border-0 rounded-3 shadow-lg text-dark">
+                    <div class="modal-header py-2 text-white rounded-top-3" style="background:#004040;">
+                        <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-1"></i>EDIT PURCHASE INVOICE METADATA</h6>
+                        <button type="button" class="btn-close btn-close-white" wire:click="closeEditPurchaseModal"></button>
+                    </div>
+                    <form wire:submit.prevent="savePurchaseDetails">
+                        <div class="modal-body p-3">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="erp-label">BILL NUMBER *</label>
+                                    <input type="text" wire:model="editBillNumber" class="form-control form-control-sm rounded-0 erp-input" required />
+                                </div>
+                                <div class="col-12">
+                                    <label class="erp-label">BILL DATE *</label>
+                                    <input type="date" wire:model="editBillDate" class="form-control form-control-sm rounded-0 erp-input" required />
+                                </div>
+                                <div class="col-12">
+                                    <label class="erp-label">PAYMENT MODE</label>
+                                    <select wire:model="editPaymentMode" class="form-select form-select-sm rounded-0 erp-input">
+                                        <option value="Cash">Cash</option>
+                                        <option value="UPI">UPI / Bank</option>
+                                        <option value="Credit">Credit (Full Due)</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="erp-label">PAID AMOUNT (₹)</label>
+                                    <input type="number" wire:model="editPaidAmount" class="form-control form-control-sm rounded-0 erp-input" step="0.01" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light p-2 rounded-bottom-3 justify-content-end border-top">
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold px-3 py-1">SAVE CHANGES</button>
+                            <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 py-1" wire:click="closeEditPurchaseModal">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     @endif

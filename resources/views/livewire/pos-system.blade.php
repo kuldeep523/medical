@@ -132,14 +132,15 @@
         <!-- Column Headers -->
         <div class="row g-0 text-white text-center fw-bold flex-shrink-0 pos-col-headers"
              style="font-size:11px;background:#008080;border-bottom:1px solid #000;">
-            <div class="col-3 border-end border-white border-opacity-50 p-1">PRODUCT</div>
-            <div class="col-1 border-end border-white border-opacity-50 p-1">PACK</div>
-            <div class="col-1 border-end border-white border-opacity-50 p-1">BATCH</div>
-            <div class="col-1 border-end border-white border-opacity-50 p-1">STRI</div>
-            <div class="col-1 border-end border-white border-opacity-50 p-1">TAB.</div>
-            <div class="col-1 border-end border-white border-opacity-50 p-1">TAX %</div>
-            <div class="col-2 border-end border-white border-opacity-50 p-1">MRP/TAB</div>
-            <div class="col-2 p-1">AMOUNT</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 20%;">PRODUCT</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 6%;">PACK</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 10%;">BATCH</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 14%;">VENDOR</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 6%;">STRI</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 6%;">TAB.</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 8%;">TAX %</div>
+            <div class="border-end border-white border-opacity-50 p-1" style="width: 15%;">MRP/TAB</div>
+            <div class="p-1" style="width: 15%;">AMOUNT</div>
         </div>
 
         <!-- Main Table -->
@@ -147,9 +148,15 @@
             <table class="table table-bordered table-sm m-0 text-center"
                    style="font-size:11px;table-layout:fixed;border-collapse:collapse;">
                 <colgroup>
-                    <col style="width:25%"><col style="width:8.33%"><col style="width:8.33%">
-                    <col style="width:8.33%"><col style="width:8.33%"><col style="width:8.33%">
-                    <col style="width:16.67%"><col style="width:16.67%">
+                    <col style="width:20%">
+                    <col style="width:6%">
+                    <col style="width:10%">
+                    <col style="width:14%">
+                    <col style="width:6%">
+                    <col style="width:6%">
+                    <col style="width:8%">
+                    <col style="width:15%">
+                    <col style="width:15%">
                 </colgroup>
                 <tbody>
                     @foreach($cart as $ci => $item)
@@ -177,6 +184,9 @@
                             </td>
                             <td class="border-end border-bottom">{{ $item['units_per_strip'] ?? '—' }}s</td>
                             <td class="border-end border-bottom" style="font-size:10px;">{{ $item['batch_no'] }}</td>
+                            <td class="border-end border-bottom text-truncate px-1" style="font-size:10px;" title="{{ $item['vendor_name'] ?? '—' }}">
+                                {{ $item['vendor_name'] ?? '—' }}
+                            </td>
                             <td class="border-end border-bottom p-0">
                                 <input type="number" wire:model.live="cart.{{ $ci }}.strips"
                                        class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
@@ -226,82 +236,147 @@
 
                     <!-- Search / Entry Row -->
                     <tr class="pos-search-row" style="height:26px;background:#fffdf0;">
-                        <td class="p-0 position-relative border-end border-bottom" style="overflow:visible;">
-                            <input type="text"
-                                   id="pos-search"
-                                   wire:model.live.debounce.200ms="searchQuery"
-                                   class="form-control form-control-sm border-0 rounded-0 ps-2 fw-bold"
-                                   placeholder="SEARCH PRODUCT…"
-                                   style="font-size:11px;height:26px;background:transparent;"
-                                   autocomplete="off"
-                                   x-init="$watch('resultsCount', () => highlightedIndex = -1)"
-                                   @focus-search.window="$el.focus()"
-                                   @keydown.arrow-down.prevent="moveHighlight('down')"
-                                   @keydown.arrow-up.prevent="moveHighlight('up')"
-                                   @keydown.enter.prevent="selectHighlighted()">
+                        @if($selectedMedicine)
+                            <!-- Product Column -->
+                            <td class="p-0 border-end border-bottom align-middle" style="overflow:visible;">
+                                <div class="d-flex align-items-center justify-content-between px-2 fw-bold" style="font-size:11px;height:26px;">
+                                    <span class="text-truncate" style="max-width: 180px;" title="{{ $selectedMedicine->name }}">
+                                        {{ $selectedMedicine->name }} ({{ $selectedMedicine->power_mg }})
+                                    </span>
+                                    <button type="button" wire:click="cancelSelection" class="btn btn-sm btn-link text-danger p-0 fw-bold border-0 text-decoration-none" style="font-size: 11px;">Clear</button>
+                                </div>
+                            </td>
 
-                            @if(strlen($searchQuery) >= 1 && count($searchResults) > 0)
-                                <div class="position-absolute bg-white shadow-lg"
-                                     x-init="resultsCount = {{ count($searchResults) }}"
-                                     x-ref="rc"
-                                     style="top:26px;left:0;width:460px;z-index:999999;border:2px solid #008080;max-height:300px;overflow-y:auto;">
-                                    @foreach($searchResults as $idx => $med)
-                                        <button type="button"
-                                                wire:click="selectMedicine({{ $med->id }})"
-                                                wire:key="sr-{{ $med->id }}"
-                                                data-idx="{{ $idx }}"
-                                                @mouseenter="highlightedIndex = {{ $idx }}"
-                                                class="w-100 text-start border-0 border-bottom p-2 d-flex justify-content-between align-items-center"
-                                                :style="highlightedIndex === {{ $idx }} ? 'background:#008080;color:#fff;' : 'background:#fff;color:#000;'"
-                                                style="cursor:pointer;font-size:11px;">
-                                            <div>
-                                                <div class="fw-bold">{{ $med->name }} <span style="font-weight:400;">({{ $med->power_mg }})</span></div>
-                                                <div style="font-size:10px;opacity:.75;">
-                                                    {{ $med->brand_name }} | {{ $med->rx_salt }}
-                                                    @if($med->batches->first())
-                                                        | Batch: {{ $med->batches->first()->batch_no }}
-                                                        | Stock: {{ $med->batches->sum('quantity') }} units
-                                                    @else
-                                                        | <span style="color:#dc2626;font-weight:600;">OUT OF STOCK</span>
+                            <!-- Pack Column -->
+                            <td class="border-end border-bottom text-center align-middle" style="font-size:11px;line-height:26px;">
+                                {{ $selectedMedicine->units_per_strip ?? 1 }}s
+                            </td>
+
+                            <!-- Batch Column -->
+                            <td class="p-0 border-end border-bottom align-middle" style="position:relative;">
+                                <select wire:model.live="selectedBatchId" class="form-select form-select-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:10px;height:26px;box-shadow:none;">
+                                    <option value="">— Select Batch —</option>
+                                    @foreach($selectedMedicine->batches as $b)
+                                        <option value="{{ $b->id }}">{{ $b->batch_no }} (Buy: {{ $b->vendor_name ?: '—' }})</option>
+                                    @endforeach
+                                </select>
+                            </td>
+
+                            <!-- Vendor Column -->
+                            <td class="border-end border-bottom text-truncate px-1 align-middle text-center" style="font-size:10px;" title="{{ $selectedBatch?->vendor_name ?? '—' }}">
+                                <span class="fw-semibold text-secondary">{{ $selectedBatch?->vendor_name ?? '—' }}</span>
+                            </td>
+
+                            <!-- Strips Column -->
+                            <td class="p-0 border-end border-bottom align-middle">
+                                <input type="number" wire:model.live="inputStrips" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" min="0">
+                            </td>
+
+                            <!-- Tablets Column -->
+                            <td class="p-0 border-end border-bottom align-middle">
+                                <input type="number" wire:model.live="inputTablets" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" min="0">
+                            </td>
+
+                            <!-- Tax % Column -->
+                            <td class="p-0 border-end border-bottom align-middle">
+                                <select wire:model.live="inputTaxPercent" @keydown.enter.prevent="addToCart" class="form-select form-select-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:10px;height:26px;box-shadow:none;">
+                                    <option value="0">0%</option>
+                                    <option value="5">5%</option>
+                                    <option value="12">12%</option>
+                                    <option value="18">18%</option>
+                                    <option value="28">28%</option>
+                                </select>
+                            </td>
+
+                            <!-- MRP Column -->
+                            <td class="p-0 border-end border-bottom align-middle">
+                                <input type="number" wire:model.live="inputPrice" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" step="0.01" min="0">
+                            </td>
+
+                            <!-- Amount Column -->
+                            <td class="p-0 border-bottom align-middle text-center">
+                                <span class="fw-bold text-success" style="font-size:11px;">₹{{ number_format($inputQuantity * $inputPrice, 2) }}</span>
+                            </td>
+                        @else
+                            <td class="p-0 position-relative border-end border-bottom" style="overflow:visible;">
+                                <input type="text"
+                                       id="pos-search"
+                                       wire:model.live.debounce.200ms="searchQuery"
+                                       class="form-control form-control-sm border-0 rounded-0 ps-2 fw-bold"
+                                       placeholder="SEARCH PRODUCT…"
+                                       style="font-size:11px;height:26px;background:transparent;"
+                                       autocomplete="off"
+                                       x-init="$watch('resultsCount', () => highlightedIndex = -1)"
+                                       @focus-search.window="$el.focus()"
+                                       @keydown.arrow-down.prevent="moveHighlight('down')"
+                                       @keydown.arrow-up.prevent="moveHighlight('up')"
+                                       @keydown.enter.prevent="selectHighlighted()">
+
+                                @if(strlen($searchQuery) >= 1 && count($searchResults) > 0)
+                                    <div class="position-absolute bg-white shadow-lg"
+                                         x-init="resultsCount = {{ count($searchResults) }}"
+                                         x-ref="rc"
+                                         style="top:26px;left:0;width:460px;z-index:999999;border:2px solid #008080;max-height:300px;overflow-y:auto;">
+                                        @foreach($searchResults as $idx => $med)
+                                            <button type="button"
+                                                    wire:click="selectMedicine({{ $med->id }})"
+                                                    wire:key="sr-{{ $med->id }}"
+                                                    data-idx="{{ $idx }}"
+                                                    @mouseenter="highlightedIndex = {{ $idx }}"
+                                                    class="w-100 text-start border-0 border-bottom p-2 d-flex justify-content-between align-items-center"
+                                                    :style="highlightedIndex === {{ $idx }} ? 'background:#008080;color:#fff;' : 'background:#fff;color:#000;'"
+                                                    style="cursor:pointer;font-size:11px;">
+                                                <div>
+                                                    <div class="fw-bold">{{ $med->name }} <span style="font-weight:400;">({{ $med->power_mg }})</span></div>
+                                                    <div style="font-size:10px;opacity:.75;">
+                                                        {{ $med->brand_name }} | {{ $med->rx_salt }}
+                                                        @if($med->batches->first())
+                                                            | Batch: {{ $med->batches->first()->batch_no }}
+                                                            | Stock: {{ $med->batches->sum('quantity') }} units
+                                                        @else
+                                                            | <span style="color:#dc2626;font-weight:600;">OUT OF STOCK</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                @php
+                                                    $firstBatch = $med->batches->first();
+                                                    $unitsPerStrip = max(1, $med->units_per_strip ?? 1);
+                                                    $priceToShow = $firstBatch ? ($firstBatch->sales_price * $unitsPerStrip) : 0;
+                                                @endphp
+                                                <div class="fw-bold ms-2 flex-shrink-0 text-end" style="color:#008080;">
+                                                    <div>₹{{ number_format($priceToShow, 2) }}</div>
+                                                    @if($unitsPerStrip > 1 && $firstBatch)
+                                                        <div class="text-muted" style="font-size: 9px; font-weight: normal;">(₹{{ number_format($firstBatch->sales_price, 2) }}/tab)</div>
                                                     @endif
                                                 </div>
-                                            </div>
-                                            @php
-                                                $firstBatch = $med->batches->first();
-                                                $unitsPerStrip = max(1, $med->units_per_strip ?? 1);
-                                                $priceToShow = $firstBatch ? ($firstBatch->sales_price * $unitsPerStrip) : 0;
-                                            @endphp
-                                            <div class="fw-bold ms-2 flex-shrink-0 text-end" style="color:#008080;">
-                                                <div>₹{{ number_format($priceToShow, 2) }}</div>
-                                                @if($unitsPerStrip > 1 && $firstBatch)
-                                                    <div class="text-muted" style="font-size: 9px; font-weight: normal;">(₹{{ number_format($firstBatch->sales_price, 2) }}/tab)</div>
-                                                @endif
-                                            </div>
-                                        </button>
-                                    @endforeach
-                                </div>
-                            @endif
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @endif
 
-                            @if(strlen($searchQuery) >= 1 && count($searchResults) === 0)
-                                <div class="position-absolute bg-white p-2 text-muted"
-                                     style="top:26px;left:0;width:300px;z-index:999999;font-size:11px;border:2px solid #ccc;">
-                                    No medicines found for "{{ $searchQuery }}"
-                                </div>
-                            @endif
-                        </td>
-                        <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
-                        <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
-                        <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
-                        <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
-                        <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
-                        <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
-                        <td class="border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                                @if(strlen($searchQuery) >= 1 && count($searchResults) === 0)
+                                    <div class="position-absolute bg-white p-2 text-muted"
+                                         style="top:26px;left:0;width:300px;z-index:999999;font-size:11px;border:2px solid #ccc;">
+                                        No medicines found for "{{ $searchQuery }}"
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                            <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                            <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                            <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                            <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                            <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                            <td class="border-end border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                            <td class="border-bottom text-muted text-center" style="line-height:26px;font-size:11px;">—</td>
+                        @endif
                     </tr>
 
                     <!-- Empty fill rows -->
                     @for($i = count($cart) + 1; $i < 8; $i++)
                         <tr class="pos-empty-row" style="height:22px;">
                             <td class="border-end border-bottom">&nbsp;</td>
+                            <td class="border-end border-bottom"></td>
                             <td class="border-end border-bottom"></td>
                             <td class="border-end border-bottom"></td>
                             <td class="border-end border-bottom"></td>
@@ -320,10 +395,19 @@
             <div class="row g-0">
                 <!-- Item Info -->
                 <div class="col-8 p-2 border-end border-secondary border-opacity-50" style="font-size:11px;">
-                    <div class="d-flex mb-1">
+                    <div class="d-flex mb-1 align-items-center">
                         <span class="lbl" style="width:70px;">Item :</span>
-                        <span class="fw-bold">{{ $selectedMedicine?->name ?? '—' }}</span>
+                        <span class="fw-bold text-dark">{{ $selectedMedicine?->name ?? '—' }}</span>
+                        @if($selectedMedicine?->brand_name)
+                            <span class="text-muted ms-2" style="font-size: 10px;">({{ $selectedMedicine->brand_name }})</span>
+                        @endif
                     </div>
+                    @if($selectedMedicine?->rx_salt)
+                        <div class="d-flex mb-1" style="font-size: 10px;">
+                            <span class="lbl" style="width:70px;">Salt :</span>
+                            <span class="text-secondary">{{ $selectedMedicine->rx_salt }}</span>
+                        </div>
+                    @endif
                     <div class="row g-0 mb-1">
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:70px;">Batch :</span>
@@ -357,6 +441,10 @@
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:60px;">Date :</span>
                             <span>{{ $sale_date ? date('d-m-Y', strtotime($sale_date)) : now()->format('d-m-Y') }}</span>
+                        </div>
+                        <div class="col-4 d-flex">
+                            <span class="lbl" style="width:60px;">Vendor :</span>
+                            <span class="text-dark fw-semibold">{{ $selectedBatch?->vendor_name ?? '—' }}</span>
                         </div>
                     </div>
                 </div>

@@ -191,9 +191,37 @@
             </div>
 
             <div class="col-md-3">
-                <label class="erp-label">VENDOR NAME</label>
-                <input type="text" wire:model="vendor_name" class="form-control form-control-sm rounded-0 erp-input" />
-                @error('vendor_name') <div class="erp-error">{{ $message }}</div> @enderror
+                <label class="erp-label">SELECT SUPPLIER *</label>
+                <select wire:model="stockInSupplierId" class="form-select form-select-sm rounded-0 erp-input" required>
+                    <option value="">— choose supplier —</option>
+                    @foreach($suppliers as $s)
+                        <option value="{{ $s->id }}">{{ $s->name }}</option>
+                    @endforeach
+                </select>
+                @error('stockInSupplierId') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-3">
+                <label class="erp-label">BILL NUMBER *</label>
+                <input type="text" wire:model="stockInBillNumber" class="form-control form-control-sm rounded-0 erp-input" required />
+                @error('stockInBillNumber') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-3">
+                <label class="erp-label">PAYMENT MODE *</label>
+                <select wire:model="stockInPaymentMode" class="form-select form-select-sm rounded-0 erp-input" required>
+                    <option value="Cash">Cash</option>
+                    <option value="Bank">Bank Transfer</option>
+                    <option value="UPI">UPI / QR Code</option>
+                    <option value="Card">Card</option>
+                </select>
+                @error('stockInPaymentMode') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-3">
+                <label class="erp-label">AMOUNT PAID (₹) *</label>
+                <input type="number" step="0.01" min="0" wire:model="stockInPaidAmount" class="form-control form-control-sm rounded-0 erp-input" required />
+                @error('stockInPaidAmount') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
             <div class="col-12 border-top pt-3 mt-1">
@@ -315,6 +343,46 @@
                         <input type="number" wire:model="batch_sales_price" step="0.01" min="0" class="form-control form-control-sm rounded-0 erp-input" />
                         @error('batch_sales_price') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
+                    @if(!$editingBatchId)
+                        <div class="col-12">
+                            <label class="erp-label">SELECT SUPPLIER *</label>
+                            <select wire:model="batch_supplier_id" class="form-select form-select-sm rounded-0 erp-input" required>
+                                <option value="">— choose supplier —</option>
+                                @foreach($suppliers as $s)
+                                    <option value="{{ $s->id }}">{{ $s->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('batch_supplier_id') <div class="erp-error">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="col-12">
+                            <label class="erp-label">BILL NUMBER *</label>
+                            <input type="text" wire:model="batch_bill_number" class="form-control form-control-sm rounded-0 erp-input" required />
+                            @error('batch_bill_number') <div class="erp-error">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="col-6">
+                            <label class="erp-label">PAYMENT MODE *</label>
+                            <select wire:model="batch_payment_mode" class="form-select form-select-sm rounded-0 erp-input" required>
+                                <option value="Cash">Cash</option>
+                                <option value="Bank">Bank Transfer</option>
+                                <option value="UPI">UPI / QR Code</option>
+                                <option value="Card">Card</option>
+                            </select>
+                            @error('batch_payment_mode') <div class="erp-error">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="col-6">
+                            <label class="erp-label">AMOUNT PAID (₹) *</label>
+                            <input type="number" step="0.01" min="0" wire:model="batch_paid_amount" class="form-control form-control-sm rounded-0 erp-input" required />
+                            @error('batch_paid_amount') <div class="erp-error">{{ $message }}</div> @enderror
+                        </div>
+                    @else
+                        <div class="col-12">
+                            <label class="erp-label">VENDOR NAME</label>
+                            <input type="text" wire:model="batch_vendor_name" class="form-control form-control-sm rounded-0 erp-input" readonly disabled />
+                        </div>
+                    @endif
                     <div class="col-12 mt-2">
                         <button type="submit" class="erp-btn-primary w-100" wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="saveBatch">
@@ -347,6 +415,7 @@
                                 <th>QTY</th>
                                 <th>PURCHASE</th>
                                 <th>MRP</th>
+                                <th>VENDOR</th>
                                 <th style="width:90px;">ACTIONS</th>
                             </tr>
                         </thead>
@@ -370,6 +439,7 @@
                                             <div class="text-muted" style="font-size: 10px;">(₹{{ number_format($b->sales_price, 2) }}/tab)</div>
                                         @endif
                                     </td>
+                                    <td class="text-muted text-break">{{ $b->vendor_name ?: '—' }}</td>
                                     <td class="d-flex align-items-center gap-2 justify-content-center">
     
                                         <button 
@@ -391,7 +461,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="text-center py-4 text-muted">No batches yet.</td></tr>
+                                <tr><td colspan="7" class="text-center py-4 text-muted">No batches yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

@@ -1,7 +1,5 @@
 <?php
-
-namespace App\Models;
-
+namespace App\Models; 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\CamelCaseFields;
@@ -65,14 +63,6 @@ class Medicine extends Model
         return $strips . ' strips, ' . $units . ' tablets';
     }
 
-    protected static function booted()
-    {
-        static::addGlobalScope('store', function (\Illuminate\Database\Eloquent\Builder $builder) {
-            if (auth()->check() && auth()->user()->store_id) {
-                $builder->where('store_id', auth()->user()->store_id);
-            }
-        });
-    }
 
     /**
      * Get the user that owns the medicine.
@@ -84,7 +74,7 @@ class Medicine extends Model
 
     /**
      * Get the batches for the medicine.
-     */
+     */ 
     public function batches()
     {
         return $this->hasMany(MedicineBatch::class);

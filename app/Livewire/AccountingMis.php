@@ -21,10 +21,16 @@ class AccountingMis extends Component
     public $expense_amount;
     public $expense_desc;
     public $expense_payment_method = 'Cash';
+    public ?int $editingExpenseId = null;
 
     // Sale Details Modal
     public $selectedSale       = null;
     public $isSaleModalOpen    = false;
+    public $isEditSaleModalOpen = false;
+    public $editCustomerName = '';
+    public $editCustomerPhone = '';
+    public $editPatientName = '';
+    public $editPaymentMethod = 'Cash';
 
     public function mount()
     {
@@ -39,7 +45,37 @@ class AccountingMis extends Component
         $this->activeTab = $tab;
     }
 
-    public function addExpense()
+    public function editExpense(int $id): void
+    {
+        $expense = Expense::findOrFail($id);
+        $this->editingExpenseId = $expense->id;
+        $this->expense_date = date('Y-m-d', strtotime($expense->expense_date));
+        $this->expense_category = $expense->category;
+        $this->expense_amount = $expense->amount;
+        $this->expense_desc = $expense->description;
+        $this->expense_payment_method = $expense->payment_method;
+    }
+
+    public function cancelEditExpense(): void
+    {
+        $this->editingExpenseId = null;
+        $this->reset(['expense_amount', 'expense_desc']);
+        $this->expense_date = date('Y-m-d');
+        $this->expense_category = 'General';
+        $this->expense_payment_method = 'Cash';
+    }
+
+    public function deleteExpense(int $id): void
+    {
+        $expense = Expense::findOrFail($id);
+        $expense->delete();
+        session()->flash('status', 'Expense deleted successfully.');
+        if ($this->editingExpenseId === $id) {
+            $this->cancelEditExpense();
+        }
+    }
+
+    public function saveExpense(): void
     {
         $this->validate([
             'expense_amount'   => 'required|numeric|min:1',
@@ -47,17 +83,91 @@ class AccountingMis extends Component
             'expense_desc'     => 'nullable|string',
         ]);
 
-        Expense::create([
-            'store_id'       => auth()->user()->store_id,
-            'expense_date'   => $this->expense_date,
-            'category'       => $this->expense_category,
-            'amount'         => $this->expense_amount,
-            'description'    => $this->expense_desc,
-            'payment_method' => $this->expense_payment_method,
-        ]);
+        if ($this->editingExpenseId) {
+            $expense = Expense::findOrFail($this->editingExpenseId);
+            $expense->update([
+                'expense_date'   => $this->expense_date,
+                'category'       => $this->expense_category,
+                'amount'         => $this->expense_amount,
+                'description'    => $this->expense_desc,
+                'payment_method' => $this->expense_payment_method,
+            ]);
+            session()->flash('status', 'Expense updated successfully.');
+        } else {
+            Expense::create([
+                'store_id'       => auth()->user()->store_id,
+                'expense_date'   => $this->expense_date,
+                'category'       => $this->expense_category,
+                'amount'         => $this->expense_amount,
+                'description'    => $this->expense_desc,
+                'payment_method' => $this->expense_payment_method,
+            ]);
+            session()->flash('status', 'Expense recorded successfully.');
+        }
 
-        $this->reset(['expense_amount', 'expense_desc']);
-        session()->flash('status', 'Expense recorded successfully.');
+        $this->cancelEditExpense();
+    }
+
+    public function addExpense(): void
+    {
+        $this->saveExpense();
+    }
+
+    public function openEditSaleModal(int $saleId): void
+    {
+        $sale = Sale::findOrFail($saleId);
+        $this->selectedSale = $sale;
+        $this->editCustomerName = $sale->customer_name ?? '';
+        $this->editCustomerPhone = $sale->customer_phone ?? '';
+        $this->editPatientName = $sale->patient_name ?? '';
+        $this->editPaymentMethod = $sale->payment_method ?? 'Cash';
+        $this->isEditSaleModalOpen = true;
+    }
+
+    public function closeEditSaleModal(): void
+    {
+        $this->isEditSaleModalOpen = false;
+        $this->selectedSale = null;
+    }
+
+    public function saveSaleDetails(): void
+    {
+        if ($this->selectedSale) {
+            $sale = Sale::findOrFail($this->selectedSale->id);
+            $sale->update([
+                'customer_name' => $this->editCustomerName,
+                'customer_phone' => $this->editCustomerPhone,
+                'patient_name' => $this->editPatientName,
+                'payment_method' => $this->editPaymentMethod,
+            ]);
+            session()->flash('status', 'Sale invoice details updated successfully.');
+            $this->closeEditSaleModal();
+        }
+    }
+
+    public function deleteSale(int $saleId): void
+    {
+        DB::transaction(function () use ($saleId) {
+            $sale = Sale::with('items')->findOrFail($saleId);
+
+            // Revert stock batch quantities
+            foreach ($sale->items as $item) {
+                if ($item->batch_no) {
+                    $batch = MedicineBatch::where('medicine_id', $item->medicine_id)
+                        ->where('batch_no', $item->batch_no)
+                        ->first();
+                    if ($batch) {
+                        $batch->increment('quantity', $item->quantity);
+                    }
+                }
+            }
+
+            // Delete Sale Items & Sale
+            $sale->items()->delete();
+            $sale->delete();
+        });
+
+        session()->flash('status', 'Sale invoice deleted and inventory quantities successfully restored.');
     }
 
     public function markBatchReturned($batchId)

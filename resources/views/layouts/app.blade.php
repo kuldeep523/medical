@@ -384,7 +384,14 @@
     function isTypingContext(e) {
         const tag = e.target.tagName;
         const editable = e.target.isContentEditable;
-        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || editable;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || editable) {
+            return true;
+        }
+        // Treat as typing context if a searchable select dropdown is currently open
+        if (document.querySelector('.searchable-select-container [x-show="open"]:not([style*="display: none"])')) {
+            return true;
+        }
+        return false;
     }
 
     document.addEventListener('keydown', function(e) {

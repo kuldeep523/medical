@@ -19,7 +19,7 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════ --}}
-    {{-- VIEW: MIS DASHBOARD                                --}}
+    {{-- VIEW: MIS DASHBOARD                                  --}}
     {{-- ════════════════════════════════════════════════════ --}}
     @if($activeTab === 'mis_dashboard')
         <div class="p-3 bg-light">
@@ -144,8 +144,10 @@
                 </div>
             </div>
             <div class="col-md-4 p-3 bg-light">
-                <div class="fw-bold mb-3 text-primary pb-1 border-bottom">RECORD DAILY EXPENSE</div>
-                <form wire:submit.prevent="addExpense" class="row g-2">
+                <div class="fw-bold mb-3 text-primary pb-1 border-bottom">
+                    {{ $editingExpenseId ? 'EDIT DAILY EXPENSE' : 'RECORD DAILY EXPENSE' }}
+                </div>
+                <form wire:submit.prevent="saveExpense" class="row g-2">
                     <div class="col-12">
                         <label class="erp-label">AMOUNT (₹) *</label>
                         <input type="number" wire:model="expense_amount" class="form-control form-control-sm rounded-0 erp-input" required />
@@ -170,10 +172,43 @@
                         <label class="erp-label">REMARK / DESCRIPTION</label>
                         <input type="text" wire:model="expense_desc" class="form-control form-control-sm rounded-0 erp-input" />
                     </div>
-                    <div class="col-12 mt-2">
-                        <button type="submit" class="erp-btn-primary w-100">SAVE EXPENSE</button>
+                    <div class="col-12 mt-2 d-flex gap-1">
+                        <button type="submit" class="erp-btn-primary flex-grow-1">{{ $editingExpenseId ? 'UPDATE EXPENSE' : 'SAVE EXPENSE' }}</button>
+                        @if($editingExpenseId)
+                            <button type="button" wire:click="cancelEditExpense" class="erp-btn-secondary">CANCEL</button>
+                        @endif
                     </div>
                 </form>
+
+                <div class="fw-bold mt-4 mb-2 text-danger pb-1 border-bottom" style="font-size:10px;">TODAY'S EXPENSES</div>
+                <div class="table-responsive" style="max-height: 200px;">
+                    <table class="table table-bordered table-sm m-0" style="font-size: 10px;">
+                        <thead>
+                            <tr class="bg-light">
+                                <th>CAT</th>
+                                <th>AMT</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $todayExpList = \App\Models\Expense::whereDate('expense_date', \Carbon\Carbon::today())->get();
+                            @endphp
+                            @forelse($todayExpList as $exp)
+                                <tr class="align-middle">
+                                    <td class="ps-1" title="{{ $exp->description }}">{{ $exp->category }}</td>
+                                    <td class="fw-bold text-danger">₹{{ number_format($exp->amount, 1) }}</td>
+                                    <td class="text-center">
+                                        <button wire:click="editExpense({{ $exp->id }})" class="btn btn-sm btn-link text-primary p-0 me-1" style="font-size: 10px; text-decoration:none;"><i class="bi bi-pencil-square"></i></button>
+                                        <button onclick="confirm('Delete this expense?') || event.stopImmediatePropagation()" wire:click="deleteExpense({{ $exp->id }})" class="btn btn-sm btn-link text-danger p-0" style="font-size: 10px; text-decoration:none;"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center py-2 text-muted">No expenses today.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -265,8 +300,14 @@
                                 </span>
                             </td>
                             <td>
-                                <button wire:click="viewSaleBill({{ $s->id }})" class="btn btn-outline-teal py-0 px-2 fw-bold" style="font-size:9px;">
-                                    <i class="bi bi-eye me-1"></i>VIEW
+                                <button wire:click="viewSaleBill({{ $s->id }})" class="btn btn-outline-teal py-0 px-2 fw-bold" style="font-size:9px;" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button wire:click="openEditSaleModal({{ $s->id }})" class="btn btn-outline-primary py-0 px-2 fw-bold ms-1" style="font-size:9px;" title="Edit Details">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button onclick="confirm('WARNING: Deleting this invoice will reverse all batch quantities and completely remove the sale transaction. Proceed?') || event.stopImmediatePropagation()" wire:click="deleteSale({{ $s->id }})" class="btn btn-outline-danger py-0 px-2 fw-bold ms-1" style="font-size:9px;" title="Delete Sale">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </td>
                         </tr>
@@ -388,6 +429,56 @@
                 }, 250);
             }
         </script>
+    @endif
+
+    {{-- ── Edit Sale Modal ────────────────────────────── --}}
+    @if($isEditSaleModalOpen && $selectedSale)
+        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5); z-index: 1050; font-family:'Segoe UI',Tahoma,sans-serif;">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+                <div class="modal-content border-0 rounded-3 shadow-lg text-dark">
+                    <div class="modal-header py-2 text-white rounded-top-3" style="background:#004040;">
+                        <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-1"></i>EDIT INVOICE METADATA</h6>
+                        <button type="button" class="btn-close btn-close-white" wire:click="closeEditSaleModal"></button>
+                    </div>
+                    <form wire:submit.prevent="saveSaleDetails">
+                        <div class="modal-body p-3">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="erp-label">BILL NO</label>
+                                    <input type="text" class="form-control form-control-sm rounded-0 bg-light fw-bold text-muted" value="{{ $selectedSale->bill_no }}" disabled />
+                                </div>
+                                <div class="col-12">
+                                    <label class="erp-label">CUSTOMER NAME</label>
+                                    <input type="text" wire:model="editCustomerName" class="form-control form-control-sm rounded-0 erp-input" required />
+                                </div>
+                                <div class="col-12">
+                                    <label class="erp-label">PATIENT NAME (FOR BILLING)</label>
+                                    <input type="text" wire:model="editPatientName" class="form-control form-control-sm rounded-0 erp-input" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="erp-label">CUSTOMER PHONE</label>
+                                    <input type="text" wire:model="editCustomerPhone" class="form-control form-control-sm rounded-0 erp-input" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="erp-label">PAYMENT METHOD</label>
+                                    <select wire:model="editPaymentMethod" class="form-select form-select-sm rounded-0 erp-input">
+                                        <option value="Cash">Cash</option>
+                                        <option value="Online">Online</option>
+                                        <option value="Card">Card</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="Credit">Credit</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light p-2 rounded-bottom-3 justify-content-end border-top">
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold px-3 py-1">SAVE CHANGES</button>
+                            <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 py-1" wire:click="closeEditSaleModal">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     @endif
 
     {{-- ── Scoped CSS ───────────────────────────────────── --}}

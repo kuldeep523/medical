@@ -23,6 +23,8 @@ class Store extends Model
         'address',
         'gst_number',
         'status',
+        'plan_name',
+        'plan_expired_at',
     ];
 
     public function users()

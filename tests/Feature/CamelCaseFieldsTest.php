@@ -12,30 +12,30 @@ class CamelCaseFieldsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_doctor_fields_are_camel_cased_on_save()
+    public function test_doctor_fields_are_capitalized_on_save()
     {
         $doctor = Doctor::create([
             'store_id' => 1,
             'name' => 'dr. john doe',
             'specialization' => 'cardiology expert',
-            'phone' => '1234567890', // should NOT be camel cased
-            'email' => 'doctor@example.com', // should NOT be camel cased
+            'phone' => '1234567890', // should NOT be formatted
+            'email' => 'doctor@example.com', // should NOT be formatted
             'clinic_name' => 'central heart clinic',
             'clinic_address' => '123 Main St, New York',
             'registration_no' => 'REG-12345',
             'is_active' => true,
         ]);
 
-        $this->assertEquals('drJohnDoe', $doctor->name);
-        $this->assertEquals('cardiologyExpert', $doctor->specialization);
-        $this->assertEquals('centralHeartClinic', $doctor->clinic_name);
-        $this->assertEquals('123MainStNewYork', $doctor->clinic_address);
-        // Non-camel-case fields should remain untouched
+        $this->assertEquals('Dr. John Doe', $doctor->name);
+        $this->assertEquals('Cardiology Expert', $doctor->specialization);
+        $this->assertEquals('Central Heart Clinic', $doctor->clinic_name);
+        $this->assertEquals('123 Main St, New York', $doctor->clinic_address);
+        // Non-formatted fields should remain untouched
         $this->assertEquals('1234567890', $doctor->phone);
         $this->assertEquals('doctor@example.com', $doctor->email);
     }
 
-    public function test_store_fields_are_camel_cased_on_save()
+    public function test_store_fields_are_capitalized_on_save()
     {
         $store = Store::create([
             'store_name' => 'my custom pharmacy',
@@ -46,13 +46,13 @@ class CamelCaseFieldsTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->assertEquals('myCustomPharmacy', $store->store_name);
-        $this->assertEquals('janeDoeSmith', $store->owner_name);
-        $this->assertEquals('456OakRoad', $store->address);
+        $this->assertEquals('My Custom Pharmacy', $store->store_name);
+        $this->assertEquals('Jane Doe Smith', $store->owner_name);
+        $this->assertEquals('456 Oak Road', $store->address);
         $this->assertEquals('pharmacy@example.com', $store->email);
     }
 
-    public function test_user_fields_are_camel_cased_on_save()
+    public function test_user_fields_are_capitalized_on_save()
     {
         $user = User::create([
             'name' => 'dr. jane smith',
@@ -62,7 +62,7 @@ class CamelCaseFieldsTest extends TestCase
             'store_id' => 1,
         ]);
 
-        $this->assertEquals('drJaneSmith', $user->name);
+        $this->assertEquals('Dr. Jane Smith', $user->name);
         $this->assertEquals('jane@example.com', $user->email);
     }
 }

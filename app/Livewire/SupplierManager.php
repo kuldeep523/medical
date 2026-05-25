@@ -33,6 +33,14 @@ class SupplierManager extends Component
     public $selectedSupplierId;
     public $paymentAmount, $paymentNote, $paymentMode = 'Cash';
 
+    // Purchase Edit Modal Inputs
+    public $isEditPurchaseModalOpen = false;
+    public $editPurchaseId;
+    public $editBillNumber;
+    public $editBillDate;
+    public $editPaymentMode = 'Cash';
+    public $editPaidAmount = 0;
+
     public function mount()
     {
         $this->bill_date = date('Y-m-d');
@@ -251,6 +259,8 @@ class SupplierManager extends Component
     {
         $purchases = Purchase::where('supplier_id', $id)->get()->map(function($p) {
             return [
+                'id' => $p->id,
+                'type' => 'purchase',
                 'date' => $p->bill_date,
                 'desc' => 'Purchase Bill: ' . $p->bill_number,
                 'debit' => $p->total_amount,
@@ -260,6 +270,8 @@ class SupplierManager extends Component
 
         $initialPayments = Purchase::where('supplier_id', $id)->where('paid_amount', '>', 0)->get()->map(function($p) {
             return [
+                'id' => $p->id,
+                'type' => 'initial_payment',
                 'date' => $p->bill_date,
                 'desc' => 'Paid on Bill: ' . $p->bill_number,
                 'debit' => 0,
@@ -269,6 +281,8 @@ class SupplierManager extends Component
 
         $extraPayments = SupplierPayment::where('supplier_id', $id)->get()->map(function($pay) {
             return [
+                'id' => $pay->id,
+                'type' => 'extra_payment',
                 'date' => $pay->payment_date,
                 'desc' => 'Ledger Payment: ' . $pay->note,
                 'debit' => 0,
@@ -277,5 +291,102 @@ class SupplierManager extends Component
         });
 
         return $purchases->concat($initialPayments)->concat($extraPayments)->sortBy('date');
+    }
+
+    public function deleteSupplier($id): void
+    {
+        $s = Supplier::findOrFail($id);
+        $s->delete();
+        session()->flash('status', 'Supplier deleted successfully.');
+        $this->resetVendorFields();
+    }
+
+    public function openEditPurchaseModal($purchaseId): void
+    {
+        $purchase = Purchase::findOrFail($purchaseId);
+        $this->editPurchaseId = $purchase->id;
+        $this->editBillNumber = $purchase->bill_number;
+        $this->editBillDate = date('Y-m-d', strtotime($purchase->bill_date));
+        $this->editPaymentMode = $purchase->payment_mode ?: 'Cash';
+        $this->editPaidAmount = $purchase->paid_amount;
+        $this->isEditPurchaseModalOpen = true;
+    }
+
+    public function closeEditPurchaseModal(): void
+    {
+        $this->isEditPurchaseModalOpen = false;
+        $this->reset(['editPurchaseId', 'editBillNumber', 'editBillDate', 'editPaymentMode', 'editPaidAmount']);
+    }
+
+    public function savePurchaseDetails(): void
+    {
+        $this->validate([
+            'editBillNumber' => 'required|string|max:255',
+            'editBillDate'   => 'required|date',
+            'editPaymentMode' => 'required|string',
+            'editPaidAmount' => 'required|numeric|min:0',
+        ]);
+
+        if ($this->editPurchaseId) {
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                $purchase = Purchase::findOrFail($this->editPurchaseId);
+                
+                $diff = $this->editPaidAmount - $purchase->paid_amount;
+
+                $purchase->update([
+                    'bill_number' => $this->editBillNumber,
+                    'bill_date' => $this->editBillDate,
+                    'payment_mode' => $this->editPaymentMode,
+                    'paid_amount' => $this->editPaidAmount,
+                ]);
+
+                MedicineBatch::where('purchase_id', $purchase->id)->update([
+                    'amount_paid_to_vendor' => $this->editPaidAmount,
+                ]);
+
+                $supplier = Supplier::findOrFail($purchase->supplier_id);
+                $supplier->decrement('current_balance', $diff);
+            });
+
+            session()->flash('status', 'Purchase bill details updated successfully.');
+            $this->closeEditPurchaseModal();
+        }
+    }
+
+    public function deletePurchase($purchaseId): void
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($purchaseId) {
+            $purchase = Purchase::findOrFail($purchaseId);
+            
+            $batches = MedicineBatch::where('purchase_id', $purchaseId)->get();
+            foreach ($batches as $batch) {
+                $batch->decrement('quantity', $batch->quantity);
+                $batch->delete();
+            }
+
+            $due = $purchase->total_amount - $purchase->paid_amount;
+            if ($due > 0) {
+                $supplier = Supplier::findOrFail($purchase->supplier_id);
+                $supplier->decrement('current_balance', $due);
+            }
+
+            $purchase->delete();
+        });
+
+        session()->flash('status', 'Purchase bill deleted and inventory & supplier balances successfully reverted.');
+    }
+
+    public function deletePayment($paymentId): void
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($paymentId) {
+            $payment = SupplierPayment::findOrFail($paymentId);
+            
+            $supplier = Supplier::findOrFail($payment->supplier_id);
+            $supplier->increment('current_balance', $payment->amount);
+
+            $payment->delete();
+        });
+
+        session()->flash('status', 'Payment deleted and supplier balance successfully restored.');
     }
 }

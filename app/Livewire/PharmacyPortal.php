@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
+use App\Models\Supplier;
+use App\Models\Purchase;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -34,6 +36,11 @@ class PharmacyPortal extends Component
     public $batch_quantity;
     public $batch_purchase_price;
     public $batch_sales_price;
+    public $batch_vendor_name;
+    public $batch_supplier_id;
+    public $batch_bill_number;
+    public $batch_payment_mode = 'Cash';
+    public $batch_paid_amount = 0;
     public $editingBatchId = null;
 
     // Stock-In inputs
@@ -44,6 +51,10 @@ class PharmacyPortal extends Component
     public $stockInPrice;
     public $stockInSalesPrice;
     public $vendor_name;
+    public $stockInSupplierId;
+    public $stockInBillNumber;
+    public $stockInPaymentMode = 'Cash';
+    public $stockInPaidAmount = 0;
 
     // Stock Adjustment
     public $adjustmentAmount = 0;
@@ -62,9 +73,11 @@ class PharmacyPortal extends Component
         // Always reset form fields when switching views
         $this->reset([
             'bulkFile', 'adjustmentAmount', 'batch_no', 'batch_expiry_date',
-            'batch_quantity', 'batch_purchase_price', 'batch_sales_price',
+            'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'batch_vendor_name',
+            'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount',
             'selectedMedicineId', 'stockInBatchNo', 'stockInExpiry',
             'stockInQuantity', 'stockInPrice', 'stockInSalesPrice', 'vendor_name',
+            'stockInSupplierId', 'stockInBillNumber', 'stockInPaymentMode', 'stockInPaidAmount',
             'editingBatchId',
         ]);
         $this->adjustmentType = 'add';
@@ -79,7 +92,7 @@ class PharmacyPortal extends Component
             $this->units_per_strip = 1;
 
         } elseif (in_array($view, ['edit', 'batches']) && $id) {
-            $medicine = Medicine::where('store_id', auth()->user()->store_id)->findOrFail($id);
+            $medicine = Medicine::findOrFail($id);
             $this->medId          = $medicine->id;
             $this->name           = $medicine->name;
             $this->rx_salt        = $medicine->rx_salt;
@@ -123,7 +136,7 @@ class PharmacyPortal extends Component
 
         if ($this->medId) {
             // EDIT
-            $medicine = Medicine::where('store_id', auth()->user()->store_id)->findOrFail($this->medId);
+            $medicine = Medicine::findOrFail($this->medId);
             $medicine->update([
                 'name'             => $this->name,
                 'brand_name'       => $this->brand_name,
@@ -139,8 +152,7 @@ class PharmacyPortal extends Component
             session()->flash('status', "Medicine '{$this->name}' updated successfully.");
         } else {
             // CREATE — check for duplicates
-            $exists = Medicine::where('store_id', auth()->user()->store_id)
-                ->where('name', $this->name)
+            $exists = Medicine::where('name', $this->name)
                 ->where('power_mg', $this->power_mg)
                 ->exists();
 
@@ -161,7 +173,7 @@ class PharmacyPortal extends Component
                 'location_column'  => $this->location_column,
                 'image'            => $imagePath,
                 'user_id'          => auth()->id(),
-                'store_id'         => auth()->user()->store_id,
+                'store_id'         => null,
             ]);
             session()->flash('status', "Medicine '{$this->name}' added to master inventory.");
         }
@@ -174,7 +186,7 @@ class PharmacyPortal extends Component
     // ─────────────────────────────────────────────
     public function deleteMedicine($id)
     {
-        $medicine = Medicine::where('store_id', auth()->user()->store_id)->findOrFail($id);
+        $medicine = Medicine::findOrFail($id);
         $medicine->delete();
         session()->flash('status', "Medicine deleted successfully.");
         $this->activeView = 'list';
@@ -192,17 +204,41 @@ class PharmacyPortal extends Component
             'stockInExpiry'      => 'required|date',
             'stockInPrice'       => 'nullable|numeric|min:0',
             'stockInSalesPrice'  => 'nullable|numeric|min:0',
-            'vendor_name'        => 'nullable|string|max:255',
+            'stockInSupplierId'  => 'required|exists:suppliers,id',
+            'stockInBillNumber'  => 'required|string|max:255',
+            'stockInPaymentMode' => 'required|string',
+            'stockInPaidAmount'  => 'required|numeric|min:0',
         ]);
 
-        $medicine = Medicine::where('store_id', auth()->user()->store_id)
-            ->findOrFail($this->selectedMedicineId);
+        $medicine = Medicine::findOrFail($this->selectedMedicineId);
 
         $unitsPerStrip = max(1, $medicine->units_per_strip);
         $totalUnits = $this->stockInQuantity * $unitsPerStrip;
 
         $perUnitPurchasePrice = $this->stockInPrice ? ($this->stockInPrice / $unitsPerStrip) : 0;
         $perUnitSalesPrice = $this->stockInSalesPrice ? ($this->stockInSalesPrice / $unitsPerStrip) : 0;
+        $totalCost = $this->stockInQuantity * ($this->stockInPrice ?: 0);
+
+        $supplier = Supplier::findOrFail($this->stockInSupplierId);
+        $paid = (float)$this->stockInPaidAmount;
+
+        // 1. Create Purchase Record
+        $purchase = Purchase::create([
+            'supplier_id'  => $this->stockInSupplierId,
+            'bill_number'  => $this->stockInBillNumber,
+            'bill_date'    => date('Y-m-d'),
+            'total_amount' => $totalCost,
+            'paid_amount'  => $paid,
+            'payment_mode' => $this->stockInPaymentMode,
+            'user_id'      => auth()->id(),
+            'store_id'     => auth()->user()->store_id,
+        ]);
+
+        // 2. Update Supplier Balance if Due
+        $due = $totalCost - $paid;
+        if ($due > 0) {
+            $supplier->increment('current_balance', $due);
+        }
 
         $existingBatch = MedicineBatch::where('medicine_id', $medicine->id)
             ->where('batch_no', $this->stockInBatchNo)
@@ -212,9 +248,11 @@ class PharmacyPortal extends Component
             $existingBatch->quantity += $totalUnits;
             if ($this->stockInPrice !== null && $this->stockInPrice !== '')      $existingBatch->purchase_price = $perUnitPurchasePrice;
             if ($this->stockInSalesPrice !== null && $this->stockInSalesPrice !== '') $existingBatch->sales_price    = $perUnitSalesPrice;
-            if ($this->vendor_name)       $existingBatch->vendor_name    = $this->vendor_name;
+            $existingBatch->vendor_name    = $supplier->name;
+            $existingBatch->purchase_id    = $purchase->id;
+            $existingBatch->amount_paid_to_vendor = $paid;
             $existingBatch->save();
-            session()->flash('status', "Batch '{$this->stockInBatchNo}' updated — stock increased by {$totalUnits} units.");
+            session()->flash('status', "Batch '{$this->stockInBatchNo}' updated — stock increased by {$totalUnits} units and purchase recorded.");
         } else {
             MedicineBatch::create([
                 'medicine_id'    => $medicine->id,
@@ -224,11 +262,13 @@ class PharmacyPortal extends Component
                 'purchase_price' => $perUnitPurchasePrice,
                 'sales_price'    => $perUnitSalesPrice,
                 'reorder_point'  => $medicine->reorder_point ?? 10,
-                'vendor_name'    => $this->vendor_name,
+                'vendor_name'    => $supplier->name,
+                'purchase_id'    => $purchase->id,
+                'amount_paid_to_vendor' => $paid,
                 'user_id'        => auth()->id(),
                 'store_id'       => auth()->user()->store_id,
             ]);
-            session()->flash('status', "New batch '{$this->stockInBatchNo}' added — {$totalUnits} units stocked.");
+            session()->flash('status', "New batch '{$this->stockInBatchNo}' added — {$totalUnits} units stocked and purchase recorded.");
         }
 
         $this->changeView('list');
@@ -239,20 +279,29 @@ class PharmacyPortal extends Component
     // ─────────────────────────────────────────────
     public function editBatch($batchId)
     {
-        $batch = MedicineBatch::whereHas('medicine', function ($query) {
-            $query->where('store_id', auth()->user()->store_id);
-        })->findOrFail($batchId);
+        $batch = MedicineBatch::findOrFail($batchId);
 
         $this->editingBatchId = $batch->id;
         $this->batch_no = $batch->batch_no;
         $this->batch_expiry_date = date('Y-m-d', strtotime($batch->expiry_date));
         $this->batch_quantity = $batch->quantity;
 
-        $medicine = Medicine::where('store_id', auth()->user()->store_id)->findOrFail($this->medId);
+        $medicine = Medicine::findOrFail($this->medId);
         $unitsPerStrip = max(1, $medicine->units_per_strip);
 
         $this->batch_purchase_price = $batch->purchase_price ? round($batch->purchase_price * $unitsPerStrip, 2) : 0;
         $this->batch_sales_price = $batch->sales_price ? round($batch->sales_price * $unitsPerStrip, 2) : 0;
+        $this->batch_vendor_name = $batch->vendor_name;
+
+        if ($batch->purchase_id) {
+            $purchase = Purchase::find($batch->purchase_id);
+            if ($purchase) {
+                $this->batch_supplier_id = $purchase->supplier_id;
+                $this->batch_bill_number = $purchase->bill_number;
+                $this->batch_payment_mode = $purchase->payment_mode;
+                $this->batch_paid_amount = $purchase->paid_amount;
+            }
+        }
 
         $this->resetValidation();
     }
@@ -260,21 +309,33 @@ class PharmacyPortal extends Component
     public function cancelEditBatch()
     {
         $this->editingBatchId = null;
-        $this->reset(['batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price']);
+        $this->reset([
+            'batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'batch_vendor_name',
+            'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount'
+        ]);
         $this->resetValidation();
     }
 
     public function saveBatch()
     {
-        $this->validate([
+        $rules = [
             'batch_no'             => 'required|string|max:255',
             'batch_expiry_date'    => 'required|date',
             'batch_quantity'       => 'required|integer|min:1',
             'batch_purchase_price' => 'nullable|numeric|min:0',
             'batch_sales_price'    => 'nullable|numeric|min:0',
-        ]);
+        ];
 
-        $medicine = Medicine::where('store_id', auth()->user()->store_id)->findOrFail($this->medId);
+        if (!$this->editingBatchId) {
+            $rules['batch_supplier_id']  = 'required|exists:suppliers,id';
+            $rules['batch_bill_number']  = 'required|string|max:255';
+            $rules['batch_payment_mode'] = 'required|string';
+            $rules['batch_paid_amount']  = 'required|numeric|min:0';
+        }
+
+        $this->validate($rules);
+
+        $medicine = Medicine::findOrFail($this->medId);
         $unitsPerStrip = max(1, $medicine->units_per_strip);
 
         $perUnitPurchasePrice = $this->batch_purchase_price ? ($this->batch_purchase_price / $unitsPerStrip) : 0;
@@ -299,11 +360,34 @@ class PharmacyPortal extends Component
                 'quantity'       => $this->batch_quantity,
                 'purchase_price' => $perUnitPurchasePrice,
                 'sales_price'    => $perUnitSalesPrice,
+                'vendor_name'    => $this->batch_vendor_name,
             ]);
 
             session()->flash('status', "Batch '{$this->batch_no}' updated successfully.");
             $this->editingBatchId = null;
         } else {
+            $supplier = Supplier::findOrFail($this->batch_supplier_id);
+            $paid = (float)$this->batch_paid_amount;
+            $totalCost = $this->batch_quantity * $perUnitPurchasePrice;
+
+            // 1. Create Purchase
+            $purchase = Purchase::create([
+                'supplier_id'  => $this->batch_supplier_id,
+                'bill_number'  => $this->batch_bill_number,
+                'bill_date'    => date('Y-m-d'),
+                'total_amount' => $totalCost,
+                'paid_amount'  => $paid,
+                'payment_mode' => $this->batch_payment_mode,
+                'user_id'      => auth()->id(),
+                'store_id'     => auth()->user()->store_id,
+            ]);
+
+            // 2. Update Supplier Balance if Due
+            $due = $totalCost - $paid;
+            if ($due > 0) {
+                $supplier->increment('current_balance', $due);
+            }
+
             $existingBatch = MedicineBatch::where('medicine_id', $medicine->id)
                 ->where('batch_no', $this->batch_no)
                 ->first();
@@ -316,8 +400,11 @@ class PharmacyPortal extends Component
                 if ($this->batch_sales_price !== null && $this->batch_sales_price !== '') {
                     $existingBatch->sales_price = $perUnitSalesPrice;
                 }
+                $existingBatch->vendor_name = $supplier->name;
+                $existingBatch->purchase_id = $purchase->id;
+                $existingBatch->amount_paid_to_vendor = $paid;
                 $existingBatch->save();
-                session()->flash('status', "Batch '{$this->batch_no}' quantity updated.");
+                session()->flash('status', "Batch '{$this->batch_no}' quantity updated and purchase recorded.");
             } else {
                 MedicineBatch::create([
                     'medicine_id'    => $medicine->id,
@@ -327,25 +414,29 @@ class PharmacyPortal extends Component
                     'purchase_price' => $perUnitPurchasePrice,
                     'sales_price'    => $perUnitSalesPrice,
                     'reorder_point'  => $medicine->reorder_point ?? 10,
+                    'vendor_name'    => $supplier->name,
+                    'purchase_id'    => $purchase->id,
+                    'amount_paid_to_vendor' => $paid,
                     'user_id'        => auth()->id(),
                     'store_id'       => auth()->user()->store_id,
                 ]);
-                session()->flash('status', "New batch '{$this->batch_no}' created.");
+                session()->flash('status', "New batch '{$this->batch_no}' created and purchase recorded.");
             }
         }
 
         // Stay on batches view, refresh
         $savedMedId = $this->medId;
-        $this->reset(['batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'editingBatchId']);
+        $this->reset([
+            'batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'batch_vendor_name',
+            'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount', 'editingBatchId'
+        ]);
         $this->medId = $savedMedId;
         $this->resetValidation();
     }
 
     public function deleteBatch($batchId)
     {
-        $batch = MedicineBatch::whereHas('medicine', function ($query) {
-            $query->where('store_id', auth()->user()->store_id);
-        })->findOrFail($batchId);
+        $batch = MedicineBatch::findOrFail($batchId);
 
         $medicineId = $batch->medicine_id;
         $batch->delete();
@@ -371,8 +462,7 @@ class PharmacyPortal extends Component
             if (count($row) < 8) continue;
 
             // Prevent duplicates
-            $exists = Medicine::where('store_id', auth()->user()->store_id)
-                ->where('name', $row[0])
+            $exists = Medicine::where('name', $row[0])
                 ->where('power_mg', $row[3])
                 ->exists();
             if ($exists) continue;
@@ -388,7 +478,7 @@ class PharmacyPortal extends Component
                 'location_section' => $row[7] ?? 'A',
                 'location_column'  => $row[8] ?? '1',
                 'user_id'          => auth()->id(),
-                'store_id'         => auth()->user()->store_id,
+                'store_id'         => null,
             ]);
             $count++;
         }
@@ -406,7 +496,6 @@ class PharmacyPortal extends Component
         $medicines = Medicine::with(['batches' => function ($q) {
                 $q->orderBy('expiry_date', 'asc');
             }])
-            ->where('store_id', auth()->user()->store_id)
             ->when($this->searchSalt !== '', function ($q) {
                 $q->where(function ($inner) {
                     $inner->where('name',    'like', '%' . $this->searchSalt . '%')
@@ -432,6 +521,7 @@ class PharmacyPortal extends Component
             'batchesList'     => $this->medId
                 ? MedicineBatch::where('medicine_id', $this->medId)->orderBy('expiry_date')->get()
                 : collect(),
+            'suppliers'       => Supplier::orderBy('name')->get(),
         ]);
     }
 }

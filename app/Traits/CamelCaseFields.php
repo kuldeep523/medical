@@ -12,8 +12,7 @@ trait CamelCaseFields
             $fields = $model->getCamelCaseAttributes();
             foreach ($fields as $field) {
                 if (isset($model->attributes[$field]) && is_string($model->attributes[$field])) {
-                    $cleaned = preg_replace('/[^a-zA-Z0-9\s_\-]/', '', $model->attributes[$field]);
-                    $model->attributes[$field] = Str::camel($cleaned);
+                    $model->attributes[$field] = Str::title($model->attributes[$field]);
                 }
             }
         });

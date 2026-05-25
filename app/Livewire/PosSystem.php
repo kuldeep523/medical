@@ -18,8 +18,12 @@ class PosSystem extends Component
 
     public $selectedMedicine = null;
     public $selectedBatch    = null;
+    public $selectedBatchId  = null;
     public $inputQuantity    = 1;
+    public $inputStrips      = 0;
+    public $inputTablets     = 1;
     public $inputPrice       = 0;
+    public $inputTaxPercent  = 0;
 
     public $cart       = [];
     public $grandTotal = 0;
@@ -117,7 +121,6 @@ class PosSystem extends Component
             $this->searchResults = Medicine::with(['batches' => function ($q) {
                     $q->where('quantity', '>', 0)->orderBy('expiry_date', 'asc');
                 }])
-                ->where('store_id', auth()->user()->store_id)
                 ->where(function ($q) {
                     $q->where('name',       'like', '%'.$this->searchQuery.'%')
                       ->orWhere('rx_salt',   'like', '%'.$this->searchQuery.'%')
@@ -132,15 +135,15 @@ class PosSystem extends Component
     }
 
     // ─────────────────────────────────────────────
-    // SELECT MEDICINE → AUTO ADD TO CART
+    // SELECT MEDICINE
     // ─────────────────────────────────────────────
     public function selectMedicine(int $id): void
     {
-        $medicine = Medicine::with(['batches' => function ($q) {
+        $this->selectedMedicine = Medicine::with(['batches' => function ($q) {
             $q->where('quantity', '>', 0)->orderBy('expiry_date', 'asc');
-        }])->where('store_id', auth()->user()->store_id)->findOrFail($id);
+        }])->findOrFail($id);
 
-        $batch = $medicine->batches->first();
+        $batch = $this->selectedMedicine->batches->first();
 
         if (! $batch) {
             session()->flash('error', 'Selected medicine has no stock in any active batch.');
@@ -149,15 +152,54 @@ class PosSystem extends Component
             return;
         }
 
-        $unitsPerStrip = max(1, $medicine->units_per_strip ?? 1);
-        $this->selectedMedicine = $medicine;
-        $this->selectedBatch    = $batch;
+        $this->selectedBatchId  = null;
+        $this->selectedBatch    = null;
+        $this->inputStrips      = 0;
+        $this->inputTablets     = 1;
         $this->inputQuantity    = 1;
-        // Store per-unit price directly (e.g. 13/tab) — NOT strip price (130/strip)
-        // The M.R.P./S field shows per-unit price so user sees 13 for 1 tablet, not 130
-        $this->inputPrice       = $batch->sales_price;
+        $this->inputPrice       = 0;
+        $this->inputTaxPercent  = 0;
 
-        $this->addToCart();
+        $this->searchQuery   = '';
+        $this->searchResults = [];
+    }
+
+    public function updatedSelectedBatchId($value): void
+    {
+        if ($value && $this->selectedMedicine) {
+            $batch = $this->selectedMedicine->batches->firstWhere('id', $value);
+            if ($batch) {
+                $this->selectedBatch = $batch;
+                $this->inputPrice = $batch->sales_price;
+                $this->updateInputQuantity();
+                $this->addToCart();
+            }
+        }
+    }
+
+    public function updatedInputStrips(): void
+    {
+        $this->updateInputQuantity();
+    }
+
+    public function updatedInputTablets(): void
+    {
+        $this->updateInputQuantity();
+    }
+
+    private function updateInputQuantity(): void
+    {
+        if ($this->selectedMedicine) {
+            $unitsPerStrip = max(1, $this->selectedMedicine->units_per_strip ?? 1);
+            $strips = max(0, intval($this->inputStrips ?? 0));
+            $tablets = max(0, intval($this->inputTablets ?? 0));
+            $this->inputQuantity = ($strips * $unitsPerStrip) + $tablets;
+        }
+    }
+
+    public function cancelSelection(): void
+    {
+        $this->resetInput();
     }
 
     // ─────────────────────────────────────────────
@@ -210,9 +252,10 @@ class PosSystem extends Component
             'tablets'         => $tablets,
             'units_per_strip' => $unitsPerStrip,
             'price'           => $this->inputPrice,
-            'tax_percent'     => 0,
+            'tax_percent'     => $this->inputTaxPercent,
             'unit_price'      => $unitPrice,
             'purchase_price'  => $this->selectedBatch->purchase_price,
+            'vendor_name'     => $this->selectedBatch->vendor_name,
             'total'           => $total,
         ];
 
@@ -231,14 +274,26 @@ class PosSystem extends Component
             $item = $this->cart[$index];
             $this->selectedMedicine = Medicine::with('batches')->find($item['medicine_id']);
             $this->selectedBatch = MedicineBatch::find($item['batch_id']);
+            $this->selectedBatchId = $item['batch_id'];
+            $this->inputQuantity = $item['quantity'];
+            $this->inputStrips = $item['strips'];
+            $this->inputTablets = $item['tablets'];
+            $this->inputPrice = $item['price'];
+            $this->inputTaxPercent = $item['tax_percent'];
         }
     }
 
     /** Reset selection/search fields after adding */
     private function resetInput(): void
     {
+        $this->selectedMedicine = null;
+        $this->selectedBatch    = null;
+        $this->selectedBatchId  = null;
         $this->inputQuantity    = 1;
         $this->inputPrice       = 0;
+        $this->inputStrips      = 0;
+        $this->inputTablets     = 1;
+        $this->inputTaxPercent  = 0;
         $this->searchQuery      = '';
         $this->searchResults    = [];
         $this->dispatch('focus-search');
