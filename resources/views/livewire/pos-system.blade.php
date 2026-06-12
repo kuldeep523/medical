@@ -164,7 +164,7 @@
                             $taxRate   = floatval($item['tax_percent'] ?? 0);
                             $rowTotal  = floatval($item['total'] ?? 0);
                             $taxAmt    = $taxRate > 0 ? round($rowTotal - ($rowTotal / (1 + $taxRate / 100)), 2) : 0;
-                            $isSelected = $selectedMedicine && $selectedMedicine->id === $item['medicine_id'] && $selectedBatch && $selectedBatch->id === $item['batch_id'];
+                            $isSelected = $footerMedicine && $footerMedicine->id === $item['medicine_id'] && $footerBatch && $footerBatch->id === $item['batch_id'];
                         @endphp
                         <tr class="align-middle pos-cart-row {{ $isSelected ? 'selected-row' : '' }}"
                             wire:click="selectCartItem({{ $ci }})"
@@ -187,18 +187,18 @@
                             <td class="border-end border-bottom text-truncate px-1" style="font-size:10px;" title="{{ $item['vendor_name'] ?? '—' }}">
                                 {{ $item['vendor_name'] ?? '—' }}
                             </td>
-                            <td class="border-end border-bottom p-0">
-                                <input type="number" wire:model.live="cart.{{ $ci }}.strips"
+                            <td class="border-end border-bottom p-0" @click.stop>
+                                <input type="number" wire:model.live.debounce.500ms="cart.{{ $ci }}.strips"
                                        class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
-                                       style="font-size:11px;height:22px;" min="0">
+                                       style="font-size:11px;height:22px;" min="0" onclick="this.select()">
                             </td>
-                            <td class="border-end border-bottom p-0">
-                                <input type="number" wire:model.live="cart.{{ $ci }}.tablets"
+                            <td class="border-end border-bottom p-0" @click.stop>
+                                <input type="number" wire:model.live.debounce.500ms="cart.{{ $ci }}.tablets"
                                        class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
-                                       style="font-size:11px;height:22px;" min="0">
+                                       style="font-size:11px;height:22px;" min="0" onclick="this.select()">
                             </td>
                             {{-- TAX % — GST slab dropdown --}}
-                            <td class="border-end border-bottom p-0">
+                            <td class="border-end border-bottom p-0" @click.stop>
                                 <x-searchable-select wire:model.live="cart.{{ $ci }}.tax_percent"
                                         class="border-0 bg-transparent text-center p-0 fw-bold"
                                         style="font-size:10px;height:22px;color:{{ $taxRate > 0 ? '#b45309' : '#555' }};"
@@ -210,14 +210,14 @@
                                     <option value="28">28%</option>
                                 </x-searchable-select>
                             </td>
-                            <td class="border-end border-bottom p-0" style="position:relative;">
+                            <td class="border-end border-bottom p-0" style="position:relative;" @click.stop>
                                 @php
                                     $itemUps2 = $item['units_per_strip'] ?? 1;
                                     $unitPriceVal = $item['unit_price'] ?? $item['price'] ?? 0;
                                 @endphp
-                                <input type="number" wire:model.live="cart.{{ $ci }}.price"
+                                <input type="number" wire:model.live.debounce.500ms="cart.{{ $ci }}.price"
                                        class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold"
-                                       style="font-size:11px;height:22px;" step="0.01" min="0">
+                                       style="font-size:11px;height:22px;" step="0.01" min="0" onclick="this.select()">
                                 @if($itemUps2 > 1)
                                     <div style="font-size:8px;color:#888;line-height:1;">strip=₹{{ number_format($unitPriceVal * $itemUps2, 0) }}</div>
                                 @endif
@@ -269,12 +269,12 @@
 
                             <!-- Strips Column -->
                             <td class="p-0 border-end border-bottom align-middle">
-                                <input type="number" wire:model.live="inputStrips" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" min="0">
+                                <input type="number" wire:model.live.debounce.500ms="inputStrips" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" min="0" onclick="this.select()">
                             </td>
 
                             <!-- Tablets Column -->
                             <td class="p-0 border-end border-bottom align-middle">
-                                <input type="number" wire:model.live="inputTablets" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" min="0">
+                                <input type="number" wire:model.live.debounce.500ms="inputTablets" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" min="0" onclick="this.select()">
                             </td>
 
                             <!-- Tax % Column -->
@@ -290,7 +290,7 @@
 
                             <!-- MRP Column -->
                             <td class="p-0 border-end border-bottom align-middle">
-                                <input type="number" wire:model.live="inputPrice" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" step="0.01" min="0">
+                                <input type="number" wire:model.live.debounce.500ms="inputPrice" @keydown.enter.prevent="addToCart" class="form-control form-control-sm border-0 bg-transparent text-center p-0 fw-bold" style="font-size:11px;height:26px;box-shadow:none;" step="0.01" min="0" onclick="this.select()">
                             </td>
 
                             <!-- Amount Column -->
@@ -397,28 +397,28 @@
                 <div class="col-8 p-2 border-end border-secondary border-opacity-50" style="font-size:11px;">
                     <div class="d-flex mb-1 align-items-center">
                         <span class="lbl" style="width:70px;">Item :</span>
-                        <span class="fw-bold text-dark">{{ $selectedMedicine?->name ?? '—' }}</span>
-                        @if($selectedMedicine?->brand_name)
-                            <span class="text-muted ms-2" style="font-size: 10px;">({{ $selectedMedicine->brand_name }})</span>
+                        <span class="fw-bold text-dark">{{ $footerMedicine?->name ?? '—' }}</span>
+                        @if($footerMedicine?->brand_name)
+                            <span class="text-muted ms-2" style="font-size: 10px;">({{ $footerMedicine->brand_name }})</span>
                         @endif
                     </div>
-                    @if($selectedMedicine?->rx_salt)
+                    @if($footerMedicine?->rx_salt)
                         <div class="d-flex mb-1" style="font-size: 10px;">
                             <span class="lbl" style="width:70px;">Salt :</span>
-                            <span class="text-secondary">{{ $selectedMedicine->rx_salt }}</span>
+                            <span class="text-secondary">{{ $footerMedicine->rx_salt }}</span>
                         </div>
                     @endif
                     <div class="row g-0 mb-1">
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:70px;">Batch :</span>
-                            <span>{{ $selectedBatch?->batch_no ?? '—' }}</span>
+                            <span>{{ $footerBatch?->batch_no ?? '—' }}</span>
                         </div>
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:60px;">Stock :</span>
-                            @if($selectedMedicine)
+                            @if($footerMedicine)
                                 @php
-                                    $totQty = $selectedMedicine->batches->sum('quantity');
-                                    $ups = max(1, $selectedMedicine->units_per_strip ?? 1);
+                                    $totQty = $footerMedicine->batches->sum('quantity');
+                                    $ups = max(1, $footerMedicine->units_per_strip ?? 1);
                                     $st = intdiv($totQty, $ups);
                                     $tb = $totQty % $ups;
                                 @endphp
@@ -436,7 +436,7 @@
                     <div class="row g-0">
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:70px;">Expiry :</span>
-                            <span>{{ $selectedBatch ? date('d-m-Y', strtotime($selectedBatch->expiry_date)) : '—' }}</span>
+                            <span>{{ $footerBatch ? date('d-m-Y', strtotime($footerBatch->expiry_date)) : '—' }}</span>
                         </div>
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:60px;">Date :</span>
@@ -444,7 +444,7 @@
                         </div>
                         <div class="col-4 d-flex">
                             <span class="lbl" style="width:60px;">Vendor :</span>
-                            <span class="text-dark fw-semibold">{{ $selectedBatch?->vendor_name ?? '—' }}</span>
+                            <span class="text-dark fw-semibold">{{ $footerBatch?->vendor_name ?? '—' }}</span>
                         </div>
                     </div>
                 </div>

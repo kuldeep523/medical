@@ -57,6 +57,7 @@
 
     selectOption(val) {
         this.value = val;
+        this.$refs.originalSelect.value = val;
 
         let selected = this.optionsList.find(o => o.value == val);
 
@@ -111,6 +112,7 @@ class="position-relative w-100 searchable-select-container">
 
     <!-- Hidden Select -->
     <select x-ref="originalSelect"
+            x-model="value"
             {{ $attributes->except(['class', 'placeholder']) }}
             class="d-none">
         {{ $slot }}

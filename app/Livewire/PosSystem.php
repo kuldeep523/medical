@@ -19,6 +19,8 @@ class PosSystem extends Component
     public $selectedMedicine = null;
     public $selectedBatch    = null;
     public $selectedBatchId  = null;
+    public $footerMedicine   = null;
+    public $footerBatch      = null;
     public $inputQuantity    = 1;
     public $inputStrips      = 0;
     public $inputTablets     = 1;
@@ -143,6 +145,8 @@ class PosSystem extends Component
             $q->where('quantity', '>', 0)->orderBy('expiry_date', 'asc');
         }])->findOrFail($id);
 
+        $this->footerMedicine = $this->selectedMedicine;
+
         $batch = $this->selectedMedicine->batches->first();
 
         if (! $batch) {
@@ -170,6 +174,7 @@ class PosSystem extends Component
             $batch = $this->selectedMedicine->batches->firstWhere('id', $value);
             if ($batch) {
                 $this->selectedBatch = $batch;
+                $this->footerBatch   = $batch;
                 $this->inputPrice = $batch->sales_price;
                 $this->updateInputQuantity();
                 $this->addToCart();
@@ -272,14 +277,8 @@ class PosSystem extends Component
     {
         if (isset($this->cart[$index])) {
             $item = $this->cart[$index];
-            $this->selectedMedicine = Medicine::with('batches')->find($item['medicine_id']);
-            $this->selectedBatch = MedicineBatch::find($item['batch_id']);
-            $this->selectedBatchId = $item['batch_id'];
-            $this->inputQuantity = $item['quantity'];
-            $this->inputStrips = $item['strips'];
-            $this->inputTablets = $item['tablets'];
-            $this->inputPrice = $item['price'];
-            $this->inputTaxPercent = $item['tax_percent'];
+            $this->footerMedicine = Medicine::with('batches')->find($item['medicine_id']);
+            $this->footerBatch = MedicineBatch::find($item['batch_id']);
         }
     }
 
@@ -309,6 +308,10 @@ class PosSystem extends Component
             if ($this->selectedMedicine && $this->selectedMedicine->id === $item['medicine_id']) {
                 $this->selectedMedicine = null;
                 $this->selectedBatch = null;
+            }
+            if ($this->footerMedicine && $this->footerMedicine->id === $item['medicine_id']) {
+                $this->footerMedicine = null;
+                $this->footerBatch = null;
             }
         }
         unset($this->cart[$index]);
