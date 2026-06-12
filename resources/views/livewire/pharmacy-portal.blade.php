@@ -267,20 +267,20 @@
             </div>
 
             <div class="col-md-4">
-                <label class="erp-label">BRAND / COMPANY *</label>
-                <input type="text" wire:model="brand_name" class="form-control form-control-sm rounded-0 erp-input" required />
+                <label class="erp-label">BRAND / COMPANY</label>
+                <input type="text" wire:model="brand_name" class="form-control form-control-sm rounded-0 erp-input" />
                 @error('brand_name') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
             <div class="col-md-4">
-                <label class="erp-label">POWER (mg / ml) *</label>
-                <input type="text" wire:model="power_mg" class="form-control form-control-sm rounded-0 erp-input" required />
+                <label class="erp-label">POWER (mg / ml)</label>
+                <input type="text" wire:model="power_mg" class="form-control form-control-sm rounded-0 erp-input" />
                 @error('power_mg') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
             <div class="col-md-6">
-                <label class="erp-label">SALT / COMPOSITION *</label>
-                <input type="text" wire:model="rx_salt" class="form-control form-control-sm rounded-0 erp-input" required />
+                <label class="erp-label">SALT / COMPOSITION</label>
+                <input type="text" wire:model="rx_salt" class="form-control form-control-sm rounded-0 erp-input" />
                 @error('rx_salt') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
@@ -291,8 +291,8 @@
             </div>
 
             <div class="col-md-4">
-                <label class="erp-label">REORDER POINT *</label>
-                <input type="number" wire:model="reorder_point" class="form-control form-control-sm rounded-0 erp-input" min="0" required />
+                <label class="erp-label">REORDER POINT</label>
+                <input type="number" wire:model="reorder_point" class="form-control form-control-sm rounded-0 erp-input" min="0" />
                 @error('reorder_point') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 

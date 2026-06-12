@@ -114,10 +114,10 @@ class PharmacyPortal extends Component
     {
         $rules = [
             'name'            => 'required|string|max:255',
-            'brand_name'      => 'required|string|max:255',
-            'rx_salt'         => 'required|string|max:255',
-            'power_mg'        => 'required|string|max:255',
-            'reorder_point'   => 'required|integer|min:0',
+            'brand_name'      => 'nullable|string|max:255',
+            'rx_salt'         => 'nullable|string|max:255',
+            'power_mg'        => 'nullable|string|max:255',
+            'reorder_point'   => 'nullable|integer|min:0',
             'purpose'         => 'nullable|string|max:1000',
         ];
 
