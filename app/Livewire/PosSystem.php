@@ -194,8 +194,8 @@ class PosSystem extends Component
 
     private function updateInputQuantity(): void
     {
-        if ($this->selectedMedicine) {
-            $unitsPerStrip = max(1, $this->selectedMedicine->units_per_strip ?? 1);
+        if ($this->selectedMedicine && $this->selectedBatch) {
+            $unitsPerStrip = max(1, $this->selectedBatch->units_per_strip ?? 1);
             $strips = max(0, intval($this->inputStrips ?? 0));
             $tablets = max(0, intval($this->inputTablets ?? 0));
             $this->inputQuantity = ($strips * $unitsPerStrip) + $tablets;
@@ -222,47 +222,98 @@ class PosSystem extends Component
             'inputPrice'    => 'required|numeric|min:0',
         ]);
 
-        $unitsPerStrip = max(1, $this->selectedMedicine->units_per_strip ?? 1);
+        $qtyRemaining = $this->inputQuantity;
+        $selectedBatchStock = $this->selectedBatch->quantity;
+        $batchesToUse = [];
 
-        // Merge if same medicine+batch already in cart
-        foreach ($this->cart as $i => $item) {
-            if ($item['medicine_id'] === $this->selectedMedicine->id
-                && $item['batch_id'] === $this->selectedBatch->id) {
-                $this->cart[$i]['quantity'] += $this->inputQuantity;
-                $this->cart[$i]['strips']    = intdiv($this->cart[$i]['quantity'], $unitsPerStrip);
-                $this->cart[$i]['tablets']   = $this->cart[$i]['quantity'] % $unitsPerStrip;
-                $this->cart[$i]['total']     = round($this->cart[$i]['unit_price'] * $this->cart[$i]['quantity'], 2);
-                $this->calculateGrandTotal();
-                $this->resetInput();
-                return;
+        if ($selectedBatchStock >= $qtyRemaining || $this->selectedMedicine->batches->count() === 1) {
+            $batchesToUse[] = [
+                'batch' => $this->selectedBatch,
+                'qty' => $qtyRemaining
+            ];
+            $qtyRemaining = 0;
+        } else {
+            if ($selectedBatchStock > 0) {
+                $batchesToUse[] = [
+                    'batch' => $this->selectedBatch,
+                    'qty' => $selectedBatchStock
+                ];
+                $qtyRemaining -= $selectedBatchStock;
+            }
+
+            $otherBatches = $this->selectedMedicine->batches
+                ->where('id', '!=', $this->selectedBatch->id)
+                ->where('quantity', '>', 0)
+                ->sortBy('expiry_date');
+
+            foreach ($otherBatches as $b) {
+                if ($qtyRemaining <= 0) break;
+                $take = min($qtyRemaining, $b->quantity);
+                $batchesToUse[] = [
+                    'batch' => $b,
+                    'qty' => $take
+                ];
+                $qtyRemaining -= $take;
+            }
+
+            if ($qtyRemaining > 0) {
+                if (count($batchesToUse) > 0) {
+                    $batchesToUse[count($batchesToUse) - 1]['qty'] += $qtyRemaining;
+                } else {
+                    $batchesToUse[] = [
+                        'batch' => $this->selectedBatch,
+                        'qty' => $qtyRemaining
+                    ];
+                }
             }
         }
 
-        // inputPrice is already per-unit price (e.g. 13/tab)
-        $unitPrice = $this->inputPrice;
-        $total    = round($unitPrice * $this->inputQuantity, 2);
-        $strips   = intdiv($this->inputQuantity, $unitsPerStrip);
-        $tablets  = $this->inputQuantity % $unitsPerStrip;
+        foreach ($batchesToUse as $bInfo) {
+            $batch = $bInfo['batch'];
+            $qtyToAdd = $bInfo['qty'];
+            if ($qtyToAdd <= 0) continue;
 
-        $this->cart[] = [
-            'medicine_id'     => $this->selectedMedicine->id,
-            'name'            => $this->selectedMedicine->name,
-            'power'           => $this->selectedMedicine->power_mg,
-            'brand_name'      => $this->selectedMedicine->brand_name,
-            'rx_salt'         => $this->selectedMedicine->rx_salt,
-            'batch_no'        => $this->selectedBatch->batch_no,
-            'batch_id'        => $this->selectedBatch->id,
-            'quantity'        => $this->inputQuantity,
-            'strips'          => $strips,
-            'tablets'         => $tablets,
-            'units_per_strip' => $unitsPerStrip,
-            'price'           => $this->inputPrice,
-            'tax_percent'     => $this->inputTaxPercent,
-            'unit_price'      => $unitPrice,
-            'purchase_price'  => $this->selectedBatch->purchase_price,
-            'vendor_name'     => $this->selectedBatch->vendor_name,
-            'total'           => $total,
-        ];
+            $unitsPerStrip = max(1, $batch->units_per_strip ?? 1);
+            $merged = false;
+
+            foreach ($this->cart as $i => $item) {
+                if ($item['medicine_id'] === $this->selectedMedicine->id && $item['batch_id'] === $batch->id) {
+                    $this->cart[$i]['quantity'] += $qtyToAdd;
+                    $this->cart[$i]['strips']    = intdiv($this->cart[$i]['quantity'], $unitsPerStrip);
+                    $this->cart[$i]['tablets']   = $this->cart[$i]['quantity'] % $unitsPerStrip;
+                    $this->cart[$i]['total']     = round($this->cart[$i]['unit_price'] * $this->cart[$i]['quantity'], 2);
+                    $merged = true;
+                    break;
+                }
+            }
+
+            if (! $merged) {
+                $unitPrice = $this->inputPrice; // apply the entered price across split batches
+                $total    = round($unitPrice * $qtyToAdd, 2);
+                $strips   = intdiv($qtyToAdd, $unitsPerStrip);
+                $tablets  = $qtyToAdd % $unitsPerStrip;
+
+                $this->cart[] = [
+                    'medicine_id'     => $this->selectedMedicine->id,
+                    'name'            => $this->selectedMedicine->name,
+                    'power'           => $this->selectedMedicine->power_mg,
+                    'brand_name'      => $this->selectedMedicine->brand_name,
+                    'rx_salt'         => $this->selectedMedicine->rx_salt,
+                    'batch_no'        => $batch->batch_no,
+                    'batch_id'        => $batch->id,
+                    'quantity'        => $qtyToAdd,
+                    'strips'          => $strips,
+                    'tablets'         => $tablets,
+                    'units_per_strip' => $unitsPerStrip,
+                    'price'           => $unitPrice,
+                    'tax_percent'     => $this->inputTaxPercent,
+                    'unit_price'      => $unitPrice,
+                    'purchase_price'  => $batch->purchase_price,
+                    'vendor_name'     => $batch->vendor_name,
+                    'total'           => $total,
+                ];
+            }
+        }
 
         $this->calculateGrandTotal();
         $this->resetInput();

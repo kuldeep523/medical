@@ -12,6 +12,8 @@ class MedicineBatch extends Model
 
     protected $camelCaseAttributes = [
         'vendor_name',
+        'location_section',
+        'location_column',
     ];
 
     protected $fillable = [
@@ -21,6 +23,7 @@ class MedicineBatch extends Model
         'quantity',
         'purchase_price',
         'sales_price',
+        'units_per_strip',
         'user_id',
         'store_id',
         'vendor_bill_path',
@@ -29,6 +32,8 @@ class MedicineBatch extends Model
         'return_status',
         'reorder_point',
         'purchase_id',
+        'location_section',
+        'location_column',
     ];
 
     protected static function booted()

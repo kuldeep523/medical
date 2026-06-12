@@ -249,7 +249,7 @@
 
                             <!-- Pack Column -->
                             <td class="border-end border-bottom text-center align-middle" style="font-size:11px;line-height:26px;">
-                                {{ $selectedMedicine->units_per_strip ?? 1 }}s
+                                {{ $selectedBatch?->units_per_strip ?? 1 }}s
                             </td>
 
                             <!-- Batch Column -->
@@ -340,7 +340,7 @@
                                                 </div>
                                                 @php
                                                     $firstBatch = $med->batches->first();
-                                                    $unitsPerStrip = max(1, $med->units_per_strip ?? 1);
+                                                    $unitsPerStrip = max(1, $firstBatch?->units_per_strip ?? 1);
                                                     $priceToShow = $firstBatch ? ($firstBatch->sales_price * $unitsPerStrip) : 0;
                                                 @endphp
                                                 <div class="fw-bold ms-2 flex-shrink-0 text-end" style="color:#008080;">
@@ -418,7 +418,7 @@
                             @if($footerMedicine)
                                 @php
                                     $totQty = $footerMedicine->batches->sum('quantity');
-                                    $ups = max(1, $footerMedicine->units_per_strip ?? 1);
+                                    $ups = max(1, $footerBatch?->units_per_strip ?? 1);
                                     $st = intdiv($totQty, $ups);
                                     $tb = $totQty % $ups;
                                 @endphp
@@ -591,15 +591,15 @@
                                     </td>
                                     <td class="py-1 text-center">
                                         {{ $item->quantity }}
-                                        @if(($item->medicine->units_per_strip ?? 1) > 1)
+                                        @if(($item->units_per_strip ?? 1) > 1)
                                             <div style="font-size: 9px; color: #888;">
-                                                ({{ intdiv($item->quantity, $item->medicine->units_per_strip) }} S, {{ $item->quantity % $item->medicine->units_per_strip }} T)
+                                                ({{ intdiv($item->quantity, $item->units_per_strip ?? 1) }} S, {{ $item->quantity % ($item->units_per_strip ?? 1) }} T)
                                             </div>
                                         @endif
                                     </td>
                                     <td class="py-1 text-end">
                                         ₹{{ number_format($item->price, 2) }}
-                                        @if(($item->medicine->units_per_strip ?? 1) > 1)
+                                        @if(($item->units_per_strip ?? 1) > 1)
                                             <span style="font-size: 9px; color: #888;">/tab</span>
                                         @endif
                                     </td>

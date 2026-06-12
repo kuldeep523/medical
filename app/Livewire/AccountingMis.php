@@ -255,7 +255,7 @@ class AccountingMis extends Component
         }
 
         if ($this->activeTab === 'inventory') {
-            $data['reorderAlerts'] = Medicine::get()->filter(fn($m) => $m->total_stock < $m->reorder_point);
+            $data['reorderAlerts'] = Medicine::get()->filter(fn($m) => $m->total_stock <= $m->reorder_point);
             $data['expiryAlerts']  = MedicineBatch::with('medicine')
                 ->where('expiry_date', '<', Carbon::today()->addDays(90))
                 ->where('quantity', '>', 0)

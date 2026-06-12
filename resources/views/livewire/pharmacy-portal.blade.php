@@ -117,7 +117,10 @@
                                 @endif
                             </td>
                             <td class="text-center text-muted text-break" style="font-size:10px;">
-                                {{ $med->location_section }} / {{ $med->location_column }}
+                                @if($first)
+                                    {{ $first->location_section ?? '—' }} / {{ $first->location_column ?? '—' }}
+                                @else —
+                                @endif
                             </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
@@ -145,8 +148,7 @@
         <div class="erp-form-header">STOCK ARRIVAL ENTRY (PURCHASE)</div>
         <form wire:submit.prevent="processStockIn" class="p-3 row g-2">
             @php
-                $selMed = $medicines->firstWhere('id', $selectedMedicineId);
-                $selUnits = $selMed ? $selMed->units_per_strip : 1;
+                $selUnits = $stockInUnitsPerStrip ?? 1;
             @endphp
 
             <div class="col-md-6">
@@ -164,6 +166,12 @@
                 <label class="erp-label">BATCH NO *</label>
                 <input type="text" wire:model="stockInBatchNo" class="form-control form-control-sm rounded-0 erp-input" required />
                 @error('stockInBatchNo') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-2">
+                <label class="erp-label">UNITS / STRIP *</label>
+                <input type="number" wire:model.live="stockInUnitsPerStrip" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
+                @error('stockInUnitsPerStrip') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
             <div class="col-md-3">
@@ -199,6 +207,18 @@
                     @endforeach
                 </select>
                 @error('stockInSupplierId') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-3">
+                <label class="erp-label">LOCATION SECTION</label>
+                <input type="text" wire:model="stockInLocationSection" class="form-control form-control-sm rounded-0 erp-input" />
+                @error('stockInLocationSection') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-3">
+                <label class="erp-label">LOCATION COLUMN</label>
+                <input type="text" wire:model="stockInLocationColumn" class="form-control form-control-sm rounded-0 erp-input" />
+                @error('stockInLocationColumn') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
             <div class="col-md-3">
@@ -270,29 +290,13 @@
                 @error('purpose') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
-            <div class="col-md-2">
-                <label class="erp-label">UNITS / STRIP *</label>
-                <input type="number" wire:model="units_per_strip" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
-                @error('units_per_strip') <div class="erp-error">{{ $message }}</div> @enderror
-            </div>
-
-            <div class="col-md-2">
+            <div class="col-md-4">
                 <label class="erp-label">REORDER POINT *</label>
                 <input type="number" wire:model="reorder_point" class="form-control form-control-sm rounded-0 erp-input" min="0" required />
                 @error('reorder_point') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
-            <div class="col-md-4">
-                <label class="erp-label">LOCATION SECTION *</label>
-                <input type="text" wire:model="location_section" class="form-control form-control-sm rounded-0 erp-input" required />
-                @error('location_section') <div class="erp-error">{{ $message }}</div> @enderror
-            </div>
 
-            <div class="col-md-4">
-                <label class="erp-label">LOCATION COLUMN *</label>
-                <input type="text" wire:model="location_column" class="form-control form-control-sm rounded-0 erp-input" required />
-                @error('location_column') <div class="erp-error">{{ $message }}</div> @enderror
-            </div>
 
             <div class="col-12 border-top pt-3 mt-1">
                 <button type="submit" class="erp-btn-primary" wire:loading.attr="disabled">
@@ -324,6 +328,11 @@
                         @error('batch_no') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
+                        <label class="erp-label">UNITS / STRIP *</label>
+                        <input type="number" wire:model.live="batch_units_per_strip" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
+                        @error('batch_units_per_strip') <div class="erp-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-6">
                         <label class="erp-label">QTY (units) *</label>
                         <input type="number" wire:model="batch_quantity" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
                         @error('batch_quantity') <div class="erp-error">{{ $message }}</div> @enderror
@@ -339,9 +348,19 @@
                         @error('batch_purchase_price') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
-                        <label class="erp-label">MRP {{ $units_per_strip > 1 ? '/ STRIP' : '' }} (₹)</label>
+                        <label class="erp-label">MRP {{ $batch_units_per_strip > 1 ? '/ STRIP' : '' }} (₹)</label>
                         <input type="number" wire:model="batch_sales_price" step="0.01" min="0" class="form-control form-control-sm rounded-0 erp-input" />
                         @error('batch_sales_price') <div class="erp-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-6">
+                        <label class="erp-label">LOC SECTION</label>
+                        <input type="text" wire:model="batch_location_section" class="form-control form-control-sm rounded-0 erp-input" />
+                        @error('batch_location_section') <div class="erp-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-6">
+                        <label class="erp-label">LOC COLUMN</label>
+                        <input type="text" wire:model="batch_location_column" class="form-control form-control-sm rounded-0 erp-input" />
+                        @error('batch_location_column') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     @if(!$editingBatchId)
                         <div class="col-12">
@@ -428,14 +447,14 @@
                                     </td>
                                     <td class="fw-bold">{{ $b->quantity }}</td>
                                     <td>
-                                        ₹{{ number_format($b->purchase_price * $units_per_strip, 2) }}
-                                        @if($units_per_strip > 1)
+                                        ₹{{ number_format($b->purchase_price * ($b->units_per_strip ?? 1), 2) }}
+                                        @if(($b->units_per_strip ?? 1) > 1)
                                             <div class="text-muted" style="font-size: 10px;">(₹{{ number_format($b->purchase_price, 2) }}/tab)</div>
                                         @endif
                                     </td>
                                     <td class="text-primary fw-bold">
-                                        ₹{{ number_format($b->sales_price * $units_per_strip, 2) }}
-                                        @if($units_per_strip > 1)
+                                        ₹{{ number_format($b->sales_price * ($b->units_per_strip ?? 1), 2) }}
+                                        @if(($b->units_per_strip ?? 1) > 1)
                                             <div class="text-muted" style="font-size: 10px;">(₹{{ number_format($b->sales_price, 2) }}/tab)</div>
                                         @endif
                                     </td>
@@ -476,7 +495,7 @@
         <div class="erp-form-header">BULK MEDICINE IMPORT (CSV)</div>
         <div class="p-4">
             <div class="alert alert-info rounded-0 py-2 px-3 small">
-                <strong>CSV Format:</strong> Name, Salt, Purpose, Power, UnitsPerStrip, Brand, ReorderPoint, Section, Column
+                <strong>CSV Format:</strong> Name, Salt, Purpose, Power, Brand, ReorderPoint
                 <br>First row is treated as header and will be skipped. Duplicate medicines (same Name + Power) are automatically skipped.
             </div>
             <form wire:submit.prevent="importBulk" class="mt-3" style="max-width:450px;">

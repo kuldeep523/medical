@@ -150,8 +150,7 @@
         {{-- Entry Row --}}
         <div class="bg-white border-bottom p-2" style="background:#fffdf0 !important;">
             @php
-                $selMed = $medicines->firstWhere('id', $selectedMedId);
-                $selUnits = $selMed ? $selMed->units_per_strip : 1;
+                $selUnits = $unitsPerStrip ?? 1;
             @endphp
             <div class="row g-1 align-items-end">
                 <div class="col-md-3">
@@ -173,6 +172,11 @@
                     <label class="erp-label">EXPIRY *</label>
                     <input type="date" wire:model="expiryDate" class="form-control form-control-sm rounded-0 erp-input" />
                     @error('expiryDate') <div class="erp-error">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-1">
+                    <label class="erp-label">UNITS/STRIP</label>
+                    <input type="number" wire:model.live="unitsPerStrip" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
+                    @error('unitsPerStrip') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
                     <label class="erp-label">QTY ({{ $selUnits > 1 ? 'strips' : 'units' }})</label>
@@ -199,7 +203,17 @@
                     <input type="number" wire:model="gstPercent" class="form-control form-control-sm rounded-0 erp-input" />
                     @error('gstPercent') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-1">
+            </div>
+            <div class="row g-1 align-items-end mt-1">
+                <div class="col-md-2">
+                    <label class="erp-label">LOC SECTION</label>
+                    <input type="text" wire:model="locSection" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+                <div class="col-md-2">
+                    <label class="erp-label">LOC COLUMN</label>
+                    <input type="text" wire:model="locColumn" class="form-control form-control-sm rounded-0 erp-input" />
+                </div>
+                <div class="col-md-2 ms-auto">
                     <button wire:click="addItem" class="erp-btn-primary w-100" style="height:24px;padding:0;">ADD ITEM</button>
                 </div>
             </div>

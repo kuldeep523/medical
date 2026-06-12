@@ -13,8 +13,6 @@ class Medicine extends Model
         'rx_salt',
         'purpose',
         'brand_name',
-        'location_section',
-        'location_column',
     ];
 
     protected $fillable = [
@@ -23,11 +21,8 @@ class Medicine extends Model
         'rx_salt',
         'purpose',
         'power_mg',
-        'units_per_strip',
         'brand_name',
         'reorder_point',
-        'location_section',
-        'location_column',
         'user_id',
         'store_id',
     ];
@@ -53,14 +48,8 @@ class Medicine extends Model
      */
     public function getFormattedStockAttribute()
     {
-        if ($this->units_per_strip <= 1) {
-            return $this->total_stock . ' units';
-        }
-
-        $strips = floor($this->total_stock / $this->units_per_strip);
-        $units = $this->total_stock % $this->units_per_strip;
-
-        return $strips . ' strips, ' . $units . ' tablets';
+        // Simple display if strips vary per batch, just show total units
+        return $this->total_stock . ' units';
     }
 
 

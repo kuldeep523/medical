@@ -23,12 +23,9 @@ class PharmacyPortal extends Component
     public $rx_salt;
     public $purpose;
     public $power_mg;
-    public $units_per_strip = 1;
     public $brand_name;
 
     public $reorder_point = 10;
-    public $location_section;
-    public $location_column;
 
     // Batch inputs
     public $batch_no;
@@ -36,6 +33,9 @@ class PharmacyPortal extends Component
     public $batch_quantity;
     public $batch_purchase_price;
     public $batch_sales_price;
+    public $batch_units_per_strip = 1;
+    public $batch_location_section;
+    public $batch_location_column;
     public $batch_vendor_name;
     public $batch_supplier_id;
     public $batch_bill_number;
@@ -50,6 +50,9 @@ class PharmacyPortal extends Component
     public $stockInQuantity;
     public $stockInPrice;
     public $stockInSalesPrice;
+    public $stockInUnitsPerStrip = 1;
+    public $stockInLocationSection;
+    public $stockInLocationColumn;
     public $vendor_name;
     public $stockInSupplierId;
     public $stockInBillNumber;
@@ -74,9 +77,11 @@ class PharmacyPortal extends Component
         $this->reset([
             'bulkFile', 'adjustmentAmount', 'batch_no', 'batch_expiry_date',
             'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'batch_vendor_name',
+            'batch_units_per_strip', 'batch_location_section', 'batch_location_column',
             'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount',
             'selectedMedicineId', 'stockInBatchNo', 'stockInExpiry',
             'stockInQuantity', 'stockInPrice', 'stockInSalesPrice', 'vendor_name',
+            'stockInUnitsPerStrip', 'stockInLocationSection', 'stockInLocationColumn',
             'stockInSupplierId', 'stockInBillNumber', 'stockInPaymentMode', 'stockInPaidAmount',
             'editingBatchId',
         ]);
@@ -86,10 +91,9 @@ class PharmacyPortal extends Component
         if ($view === 'create') {
             $this->reset([
                 'medId', 'name', 'image', 'rx_salt', 'purpose', 'power_mg',
-                'units_per_strip', 'brand_name', 'location_section', 'location_column',
+                'brand_name',
             ]);
             $this->reorder_point = 10;
-            $this->units_per_strip = 1;
 
         } elseif (in_array($view, ['edit', 'batches']) && $id) {
             $medicine = Medicine::findOrFail($id);
@@ -98,11 +102,8 @@ class PharmacyPortal extends Component
             $this->rx_salt        = $medicine->rx_salt;
             $this->purpose        = $medicine->purpose;
             $this->power_mg       = $medicine->power_mg;
-            $this->units_per_strip = $medicine->units_per_strip;
             $this->brand_name     = $medicine->brand_name;
             $this->reorder_point  = $medicine->reorder_point;
-            $this->location_section = $medicine->location_section;
-            $this->location_column  = $medicine->location_column;
         }
     }
 
@@ -116,10 +117,7 @@ class PharmacyPortal extends Component
             'brand_name'      => 'required|string|max:255',
             'rx_salt'         => 'required|string|max:255',
             'power_mg'        => 'required|string|max:255',
-            'units_per_strip' => 'required|integer|min:1',
             'reorder_point'   => 'required|integer|min:0',
-            'location_section'=> 'required|string|max:255',
-            'location_column' => 'required|string|max:255',
             'purpose'         => 'nullable|string|max:1000',
         ];
 
@@ -143,10 +141,7 @@ class PharmacyPortal extends Component
                 'rx_salt'          => $this->rx_salt,
                 'purpose'          => $this->purpose,
                 'power_mg'         => $this->power_mg,
-                'units_per_strip'  => $this->units_per_strip,
                 'reorder_point'    => $this->reorder_point,
-                'location_section' => $this->location_section,
-                'location_column'  => $this->location_column,
                 'image'            => $imagePath ?: $medicine->image,
             ]);
             session()->flash('status', "Medicine '{$this->name}' updated successfully.");
@@ -167,10 +162,7 @@ class PharmacyPortal extends Component
                 'rx_salt'          => $this->rx_salt,
                 'purpose'          => $this->purpose,
                 'power_mg'         => $this->power_mg,
-                'units_per_strip'  => $this->units_per_strip,
                 'reorder_point'    => $this->reorder_point,
-                'location_section' => $this->location_section,
-                'location_column'  => $this->location_column,
                 'image'            => $imagePath,
                 'user_id'          => auth()->id(),
                 'store_id'         => null,
@@ -208,11 +200,14 @@ class PharmacyPortal extends Component
             'stockInBillNumber'  => 'required|string|max:255',
             'stockInPaymentMode' => 'required|string',
             'stockInPaidAmount'  => 'required|numeric|min:0',
+            'stockInUnitsPerStrip'=> 'required|integer|min:1',
+            'stockInLocationSection' => 'nullable|string|max:255',
+            'stockInLocationColumn' => 'nullable|string|max:255',
         ]);
 
         $medicine = Medicine::findOrFail($this->selectedMedicineId);
 
-        $unitsPerStrip = max(1, $medicine->units_per_strip);
+        $unitsPerStrip = max(1, $this->stockInUnitsPerStrip);
         $totalUnits = $this->stockInQuantity * $unitsPerStrip;
 
         $perUnitPurchasePrice = $this->stockInPrice ? ($this->stockInPrice / $unitsPerStrip) : 0;
@@ -251,6 +246,9 @@ class PharmacyPortal extends Component
             $existingBatch->vendor_name    = $supplier->name;
             $existingBatch->purchase_id    = $purchase->id;
             $existingBatch->amount_paid_to_vendor = $paid;
+            $existingBatch->units_per_strip = $unitsPerStrip;
+            $existingBatch->location_section = $this->stockInLocationSection;
+            $existingBatch->location_column = $this->stockInLocationColumn;
             $existingBatch->save();
             session()->flash('status', "Batch '{$this->stockInBatchNo}' updated — stock increased by {$totalUnits} units and purchase recorded.");
         } else {
@@ -265,6 +263,9 @@ class PharmacyPortal extends Component
                 'vendor_name'    => $supplier->name,
                 'purchase_id'    => $purchase->id,
                 'amount_paid_to_vendor' => $paid,
+                'units_per_strip'=> $unitsPerStrip,
+                'location_section' => $this->stockInLocationSection,
+                'location_column' => $this->stockInLocationColumn,
                 'user_id'        => auth()->id(),
                 'store_id'       => auth()->user()->store_id,
             ]);
@@ -285,9 +286,12 @@ class PharmacyPortal extends Component
         $this->batch_no = $batch->batch_no;
         $this->batch_expiry_date = date('Y-m-d', strtotime($batch->expiry_date));
         $this->batch_quantity = $batch->quantity;
+        $this->batch_units_per_strip = $batch->units_per_strip ?? 1;
+        $this->batch_location_section = $batch->location_section;
+        $this->batch_location_column = $batch->location_column;
 
         $medicine = Medicine::findOrFail($this->medId);
-        $unitsPerStrip = max(1, $medicine->units_per_strip);
+        $unitsPerStrip = max(1, $this->batch_units_per_strip);
 
         $this->batch_purchase_price = $batch->purchase_price ? round($batch->purchase_price * $unitsPerStrip, 2) : 0;
         $this->batch_sales_price = $batch->sales_price ? round($batch->sales_price * $unitsPerStrip, 2) : 0;
@@ -324,6 +328,9 @@ class PharmacyPortal extends Component
             'batch_quantity'       => 'required|integer|min:1',
             'batch_purchase_price' => 'nullable|numeric|min:0',
             'batch_sales_price'    => 'nullable|numeric|min:0',
+            'batch_units_per_strip'=> 'required|integer|min:1',
+            'batch_location_section' => 'nullable|string|max:255',
+            'batch_location_column' => 'nullable|string|max:255',
         ];
 
         if (!$this->editingBatchId) {
@@ -336,7 +343,7 @@ class PharmacyPortal extends Component
         $this->validate($rules);
 
         $medicine = Medicine::findOrFail($this->medId);
-        $unitsPerStrip = max(1, $medicine->units_per_strip);
+        $unitsPerStrip = max(1, $this->batch_units_per_strip);
 
         $perUnitPurchasePrice = $this->batch_purchase_price ? ($this->batch_purchase_price / $unitsPerStrip) : 0;
         $perUnitSalesPrice = $this->batch_sales_price ? ($this->batch_sales_price / $unitsPerStrip) : 0;
@@ -361,6 +368,9 @@ class PharmacyPortal extends Component
                 'purchase_price' => $perUnitPurchasePrice,
                 'sales_price'    => $perUnitSalesPrice,
                 'vendor_name'    => $this->batch_vendor_name,
+                'units_per_strip'=> $unitsPerStrip,
+                'location_section' => $this->batch_location_section,
+                'location_column' => $this->batch_location_column,
             ]);
 
             session()->flash('status', "Batch '{$this->batch_no}' updated successfully.");
@@ -403,6 +413,9 @@ class PharmacyPortal extends Component
                 $existingBatch->vendor_name = $supplier->name;
                 $existingBatch->purchase_id = $purchase->id;
                 $existingBatch->amount_paid_to_vendor = $paid;
+                $existingBatch->units_per_strip = $unitsPerStrip;
+                $existingBatch->location_section = $this->batch_location_section;
+                $existingBatch->location_column = $this->batch_location_column;
                 $existingBatch->save();
                 session()->flash('status', "Batch '{$this->batch_no}' quantity updated and purchase recorded.");
             } else {
@@ -417,6 +430,9 @@ class PharmacyPortal extends Component
                     'vendor_name'    => $supplier->name,
                     'purchase_id'    => $purchase->id,
                     'amount_paid_to_vendor' => $paid,
+                    'units_per_strip'=> $unitsPerStrip,
+                    'location_section' => $this->batch_location_section,
+                    'location_column' => $this->batch_location_column,
                     'user_id'        => auth()->id(),
                     'store_id'       => auth()->user()->store_id,
                 ]);
@@ -472,11 +488,8 @@ class PharmacyPortal extends Component
                 'rx_salt'          => $row[1],
                 'purpose'          => $row[2] ?? '',
                 'power_mg'         => $row[3],
-                'units_per_strip'  => (int)($row[4] ?? 1) ?: 1,
                 'brand_name'       => $row[5] ?? '',
                 'reorder_point'    => (int)($row[6] ?? 10),
-                'location_section' => $row[7] ?? 'A',
-                'location_column'  => $row[8] ?? '1',
                 'user_id'          => auth()->id(),
                 'store_id'         => null,
             ]);
