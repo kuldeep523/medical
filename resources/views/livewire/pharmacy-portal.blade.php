@@ -343,7 +343,7 @@
                         @error('batch_expiry_date') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
-                        <label class="erp-label">PURCHASE {{ $units_per_strip > 1 ? '/ STRIP' : '' }} (₹)</label>
+                        <label class="erp-label">PURCHASE {{ $batch_units_per_strip > 1 ? '/ STRIP' : '' }} (₹)</label>
                         <input type="number" wire:model="batch_purchase_price" step="0.01" min="0" class="form-control form-control-sm rounded-0 erp-input" />
                         @error('batch_purchase_price') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
