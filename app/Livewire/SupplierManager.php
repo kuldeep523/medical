@@ -42,6 +42,15 @@ class SupplierManager extends Component
     public $editPaymentMode = 'Cash';
     public $editPaidAmount = 0;
 
+    // Add Medicine Modal Inputs
+    public $isAddMedicineModalOpen = false;
+    public $newMedName;
+    public $newMedBrand;
+    public $newMedSalt;
+    public $newMedPurpose;
+    public $newMedPower;
+    public $newMedReorderPoint = 10;
+
     public function mount()
     {
         $this->bill_date = date('Y-m-d');
@@ -324,6 +333,55 @@ class SupplierManager extends Component
     {
         $this->isEditPurchaseModalOpen = false;
         $this->reset(['editPurchaseId', 'editBillNumber', 'editBillDate', 'editPaymentMode', 'editPaidAmount']);
+    }
+
+    public function openAddMedicineModal(): void
+    {
+        $this->isAddMedicineModalOpen = true;
+    }
+
+    public function closeAddMedicineModal(): void
+    {
+        $this->isAddMedicineModalOpen = false;
+        $this->reset(['newMedName', 'newMedBrand', 'newMedSalt', 'newMedPurpose', 'newMedPower']);
+        $this->newMedReorderPoint = 10;
+        $this->resetValidation();
+    }
+
+    public function saveNewMedicine()
+    {
+        $this->validate([
+            'newMedName' => 'required|string|max:255',
+            'newMedBrand' => 'nullable|string|max:255',
+            'newMedSalt' => 'nullable|string|max:255',
+            'newMedPower' => 'nullable|string|max:255',
+            'newMedReorderPoint' => 'nullable|integer|min:0',
+            'newMedPurpose' => 'nullable|string|max:1000',
+        ]);
+
+        $exists = Medicine::where('name', $this->newMedName)
+            ->where('power_mg', $this->newMedPower)
+            ->exists();
+
+        if ($exists) {
+            session()->flash('error', "A medicine with the same name and power already exists.");
+            return;
+        }
+
+        $med = Medicine::create([
+            'name' => $this->newMedName,
+            'brand_name' => $this->newMedBrand,
+            'rx_salt' => $this->newMedSalt,
+            'purpose' => $this->newMedPurpose,
+            'power_mg' => $this->newMedPower,
+            'reorder_point' => $this->newMedReorderPoint,
+            'user_id' => auth()->id(),
+            'store_id' => auth()->user() ? auth()->user()->store_id : null,
+        ]);
+
+        $this->selectedMedId = $med->id;
+        session()->flash('status', "Medicine '{$this->newMedName}' added successfully.");
+        $this->closeAddMedicineModal();
     }
 
     public function savePurchaseDetails(): void

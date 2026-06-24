@@ -154,11 +154,14 @@
             @endphp
             <div class="row g-1 align-items-end">
                 <div class="col-md-3">
-                    <label class="erp-label">MEDICINE *</label>
+                    <div class="d-flex justify-content-between align-items-end mb-1">
+                        <label class="erp-label mb-0">MEDICINE *</label>
+                        <button type="button" wire:click="openAddMedicineModal" class="btn btn-sm btn-link py-0 px-0 text-decoration-none fw-bold" style="font-size:9px; color:#008080;"><i class="bi bi-plus-circle"></i> NEW</button>
+                    </div>
                     <x-searchable-select wire:model="selectedMedId" class="rounded-0 erp-input" placeholder="— choose —">
                         <option value="">— choose —</option>
                         @foreach($medicines as $m)
-                            <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->power_mg }})</option>
+                            <option value="{{ $m->id }}">{{ $m->name }} {{ $m->power_mg ? '(' . $m->power_mg . ')' : '' }}</option>
                         @endforeach
                     </x-searchable-select>
                     @error('selectedMedId') <div class="erp-error">{{ $message }}</div> @enderror
@@ -434,6 +437,51 @@
                         <div class="modal-footer bg-light p-2 rounded-bottom-3 justify-content-end border-top">
                             <button type="submit" class="btn btn-primary btn-sm fw-bold px-3 py-1">SAVE CHANGES</button>
                             <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 py-1" wire:click="closeEditPurchaseModal">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ── Add Medicine Modal ────────────────────────── --}}
+    @if($isAddMedicineModalOpen)
+        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5); z-index: 1050; font-family:'Segoe UI',Tahoma,sans-serif;">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+                <div class="modal-content border-0 rounded-3 shadow-lg text-dark">
+                    <div class="modal-header py-2 text-white rounded-top-3" style="background:#004040;">
+                        <h6 class="modal-title fw-bold"><i class="bi bi-plus-circle me-1"></i>ADD NEW MEDICINE</h6>
+                        <button type="button" class="btn-close btn-close-white" wire:click="closeAddMedicineModal"></button>
+                    </div>
+                    <form wire:submit.prevent="saveNewMedicine">
+                        <div class="modal-body p-3">
+                            <div class="row g-2">
+                                <div class="col-md-8">
+                                    <label class="erp-label">MEDICINE NAME *</label>
+                                    <input type="text" wire:model="newMedName" class="form-control form-control-sm rounded-0 erp-input" required />
+                                    @error('newMedName') <div class="erp-error">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="erp-label">POWER (mg/ml)</label>
+                                    <input type="text" wire:model="newMedPower" class="form-control form-control-sm rounded-0 erp-input" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="erp-label">BRAND / COMPANY</label>
+                                    <input type="text" wire:model="newMedBrand" class="form-control form-control-sm rounded-0 erp-input" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="erp-label">RX SALT COMPOSITION</label>
+                                    <input type="text" wire:model="newMedSalt" class="form-control form-control-sm rounded-0 erp-input" />
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="erp-label">PURPOSE / USAGE</label>
+                                    <input type="text" wire:model="newMedPurpose" class="form-control form-control-sm rounded-0 erp-input" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light p-2 rounded-bottom-3 justify-content-end border-top">
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold px-3 py-1" style="background:#008080; border:none;">SAVE MEDICINE</button>
+                            <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 py-1" wire:click="closeAddMedicineModal">CANCEL</button>
                         </div>
                     </form>
                 </div>
