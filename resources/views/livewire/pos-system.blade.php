@@ -553,116 +553,247 @@
 
     @if($invoiceMode && $lastSale)
         <div class="pos-fullscreen d-flex align-items-center justify-content-center bg-dark bg-opacity-75" style="z-index:999999;">
-            <div class="bg-white p-4 shadow-lg rounded-3 border text-dark" style="width:480px;max-height:90vh;overflow-y:auto;">
-                <div class="text-center pb-3 border-bottom">
-                    <h4 class="fw-bold mb-1" style="color:#008080;">{{ auth()->user()->store?->name ?? 'METRO PHARMACY' }}</h4>
-                    <p class="text-muted mb-0" style="font-size:11px;">
-                        {{ auth()->user()->store?->address ?? '123 Health Ave' }}<br>
-                        Phone: {{ auth()->user()->store?->phone ?? '9876543210' }}
-                    </p>
+            <div class="bg-white shadow-lg print-wrapper position-relative" style="width: 800px; max-height: 95vh; overflow-y: auto;">
+                
+                <!-- Action Buttons (No Print) -->
+                <div class="d-flex gap-2 justify-content-end p-2 bg-light border-bottom no-print position-sticky top-0" style="z-index: 10;">
+                    <button onclick="window.print()" class="btn btn-primary px-3 py-1 fw-bold" style="font-size:12px;">
+                        <i class="bi bi-printer"></i> PRINT BILL
+                    </button>
+                    <button wire:click="newSale" class="btn btn-success px-3 py-1 fw-bold" style="font-size:12px;">
+                        <i class="bi bi-plus-circle"></i> NEW SALE (ESC)
+                    </button>
                 </div>
 
-                <div class="py-3 border-bottom" style="font-size:11px;">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span><strong>Bill No:</strong> {{ $lastSale->bill_no }}</span>
-                        <span><strong>Date:</strong> {{ $lastSale->created_at->format('d-m-Y h:i A') }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span><strong>Patient:</strong> {{ $lastSale->patient_name ?: 'CASH' }}</span>
-                        <span><strong>Method:</strong> {{ $lastSale->payment_method }}</span>
-                    </div>
-                    @if($lastSale->doctor_name)
-                        <div class="mt-1"><strong>Doctor:</strong> {{ $lastSale->doctor_name }}</div>
-                    @endif
-                    @if($lastSale->bill_tag)
-                        <div class="mt-1"><strong style="color:#008080;">Tag:</strong> {{ $lastSale->bill_tag }}</div>
-                    @endif
-                </div>
+                <!-- The actual print area -->
+                <div id="print-area" class="p-4" style="background:#fff; color:#000; font-family:'Segoe UI', Tahoma, sans-serif;">
+                    
+                    <!-- HEADER -->
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3" style="border-color:#222 !important;">
+                        <!-- Left: Logo & Name -->
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-plus-square-fill" style="color:#006644; font-size:40px;"></i>
+                            <div>
+                                <h2 class="fw-bolder m-0" style="color:#006644; font-size:28px; line-height:1;">
+                                    {{ auth()->user()->store?->name ?? 'Store Name Not Set' }}
+                                </h2>
+                                <span class="text-muted" style="font-size:12px;">Smart Pharmacy, Better Care</span>
+                            </div>
+                        </div>
 
-                <div class="py-3 border-bottom">
-                    <table class="w-100" style="font-size:11px;">
-                        <thead>
-                            <tr class="fw-bold border-bottom">
-                                <th class="pb-1 text-start">PRODUCT</th>
-                                <th class="pb-1 text-center">QTY</th>
-                                <th class="pb-1 text-end">PRICE</th>
-                                <th class="pb-1 text-end">AMOUNT</th>
+                        <!-- Center: Badge -->
+                        <div class="text-center rounded" style="background:#006644; color:#fff; padding:6px 20px;">
+                            <div class="fw-bold" style="font-size:16px;">SALES BILL</div>
+                            <div class="fw-bold" style="font-size:14px;">TAX INVOICE</div>
+                        </div>
+
+                        <!-- Right: Store Info -->
+                        <div class="text-end" style="font-size:12px; color:#333;">
+                            <h5 class="fw-bold m-0" style="color:#006644;">{{ auth()->user()->store?->name ?? 'Store Name Not Set' }}</h5>
+                            <div>{{ auth()->user()->store?->address ?? 'Address Not Provided' }}</div>
+                            <div>Mob : {{ auth()->user()->store?->phone ?? 'Not Provided' }}</div>
+                            @if(auth()->user()->store?->email)
+                            <div>Email : {{ auth()->user()->store?->email }}</div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- INFO SECTION -->
+                    <div class="row mb-3" style="font-size:12px;">
+                        <div class="col-4">
+                            <table class="table-sm table-borderless m-0 p-0" style="width:100%;">
+                                <tr><td class="fw-bold py-0" style="width:80px;">Bill No.</td><td class="py-0">: {{ $lastSale->bill_no }}</td></tr>
+                                <tr><td class="fw-bold py-0">Date</td><td class="py-0">: {{ $lastSale->created_at->format('d-m-Y h:i A') }}</td></tr>
+                                <tr><td class="fw-bold py-0">Bill Type</td><td class="py-0">: {{ $lastSale->order_type }}</td></tr>
+                                <tr><td class="fw-bold py-0">Payment Mode</td><td class="py-0">: {{ $lastSale->payment_method }}</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-4">
+                            <table class="table-sm table-borderless m-0 p-0" style="width:100%;">
+                                <tr><td class="fw-bold py-0" style="width:90px;">Patient Name</td><td class="py-0">: {{ $lastSale->patient_name ?: 'Walk-in Customer' }}</td></tr>
+                                <tr><td class="fw-bold py-0">Patient Phone</td><td class="py-0">: {{ $lastSale->customer_phone ?: '—' }}</td></tr>
+                                <tr><td class="fw-bold py-0">Address</td><td class="py-0">: {{ $lastSale->patient_address ?: '—' }}</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-4">
+                            <table class="table-sm table-borderless m-0 p-0" style="width:100%;">
+                                <tr><td class="fw-bold py-0" style="width:80px;">Doctor Name</td><td class="py-0">: {{ $lastSale->doctor_name ? 'Dr. ' . str_replace('Dr. ', '', $lastSale->doctor_name) : 'Self' }}</td></tr>
+                                <tr><td class="fw-bold py-0">Doctor Phone</td><td class="py-0">: {{ $lastSale->doctor_number ?: '—' }}</td></tr>
+                                <tr><td class="fw-bold py-0">Reg. No.</td><td class="py-0">: {{ $lastSale->doctor_register_no ?: '—' }}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TABLE -->
+                    <table class="table table-bordered border-dark text-center align-middle mb-0" style="font-size:12px; border-color:#aaa !important;">
+                        <thead style="background:#006644; color:#fff;">
+                            <tr>
+                                <th style="width:50px;">S.No.</th>
+                                <th class="text-start">Product Name<br><span style="font-weight:normal; font-size:10px;">(Composition)</span></th>
+                                <th style="width:90px;">Batch No.</th>
+                                <th style="width:80px;">Expiry</th>
+                                <th style="width:60px;">Qty</th>
+                                <th style="width:80px;">MRP<br>(₹)</th>
+                                <th style="width:80px;">Rate<br>(₹)</th>
+                                <th style="width:90px;">Amount<br>(₹)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($lastSale->items as $item)
+                            @php 
+                                $totalQty = 0; 
+                                $totalItems = count($lastSale->items);
+                            @endphp
+                            @foreach($lastSale->items as $idx => $item)
+                                @php 
+                                    $totalQty += $item->quantity; 
+                                    $mrpPerUnit = $item->price; 
+                                    $ratePerUnit = $item->price;
+                                @endphp
                                 <tr>
-                                    <td class="py-1 text-start">
-                                        {{ $item->medicine->name ?? 'N/A' }}
-                                        <div style="font-size:9px;color:#888;">Batch: {{ $item->batch_no }}</div>
-                                    </td>
-                                    <td class="py-1 text-center">
-                                        {{ $item->quantity }}
-                                        @if(($item->units_per_strip ?? 1) > 1)
-                                            <div style="font-size: 9px; color: #888;">
-                                                ({{ intdiv($item->quantity, $item->units_per_strip ?? 1) }} S, {{ $item->quantity % ($item->units_per_strip ?? 1) }} T)
-                                            </div>
+                                    <td>{{ $idx + 1 }}</td>
+                                    <td class="text-start">
+                                        <div class="fw-bold">{{ $item->medicine->name ?? 'Unknown' }}</div>
+                                        @if($item->medicine && $item->medicine->rx_salt)
+                                            <div style="font-size:10px;">({{ $item->medicine->rx_salt }})</div>
                                         @endif
                                     </td>
-                                    <td class="py-1 text-end">
-                                        ₹{{ number_format($item->price, 2) }}
-                                        @if(($item->units_per_strip ?? 1) > 1)
-                                            <span style="font-size: 9px; color: #888;">/tab</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-1 text-end">₹{{ number_format($item->total, 2) }}</td>
+                                    <td>{{ $item->batch_no }}</td>
+                                    <td>{{ $item->batch ? date('m-Y', strtotime($item->batch->expiry_date)) : '—' }}</td>
+                                    <td>{{ $item->quantity }}</td>
+                                    <td>{{ number_format($mrpPerUnit, 2) }}</td>
+                                    <td>{{ number_format($ratePerUnit, 2) }}</td>
+                                    <td>{{ number_format($item->total, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                </div>
 
-                <div class="py-3" style="font-size:12px;">
-                    @if(($lastSale->discount_percent ?? 0) > 0)
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Subtotal (before disc):</span>
-                            <span>₹{{ number_format($lastSale->total_amount + $lastSale->discount_amount, 2) }}</span>
+                    <!-- TABLE FOOTER ROW -->
+                    <div class="d-flex border border-top-0" style="border-color:#aaa !important; font-size:12px;">
+                        <div class="p-2" style="width:40%;">
+                            <div class="d-flex"><div style="width:80px;">Total Items :</div><div class="fw-bold">{{ $totalItems }}</div></div>
+                            <div class="d-flex"><div style="width:80px;">Total Qty :</div><div class="fw-bold">{{ $totalQty }}</div></div>
                         </div>
-                        <div class="d-flex justify-content-between mb-1 text-danger">
-                            <span class="text-muted">Discount ({{ number_format($lastSale->discount_percent, 1) }}%):</span>
-                            <span>-₹{{ number_format($lastSale->discount_amount, 2) }}</span>
+                        <div class="p-2 d-flex justify-content-end align-items-center flex-grow-1 border-start" style="border-color:#aaa !important;">
+                            <span class="fw-bold me-4">SUB TOTAL</span>
+                            <span class="fw-bold">₹{{ number_format($lastSale->total_amount + ($lastSale->discount_amount ?? 0), 2) }}</span>
                         </div>
-                    @endif
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Sub Total (excl. GST):</span>
-                        <span>₹{{ number_format($lastSale->total_amount - $gstTotal, 2) }}</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">GST:</span>
-                        <span>₹{{ number_format($gstTotal, 2) }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between fw-bold pt-1 border-top" style="font-size:14px;">
-                        <span>GRAND TOTAL:</span>
-                        <span>₹{{ number_format($lastSale->total_amount, 2) }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between text-success mt-1" style="font-size:11px;">
-                        <span>Paid Amount:</span>
-                        <span class="fw-bold">₹{{ number_format($lastSale->amount_paid, 2) }}</span>
-                    </div>
-                </div>
 
-                <div class="d-flex gap-2 justify-content-end pt-3 border-top no-print">
-                    <button onclick="window.print()" class="btn btn-primary px-3 py-1 fw-bold" style="font-size:11px;">
-                        <i class="bi bi-printer"></i> PRINT BILL
-                    </button>
-                    <button wire:click="newSale" class="btn btn-success px-3 py-1 fw-bold" style="font-size:11px;">
-                        <i class="bi bi-plus-circle"></i> NEW SALE (ESC)
-                    </button>
+                    <div class="row g-0 mt-3" style="font-size:12px;">
+                        <!-- LEFT BOX -->
+                        <div class="col-6 pe-3">
+                            <div class="border rounded p-2 mb-3" style="border-color:#aaa !important;">
+                                <div class="fw-bold text-muted mb-1" style="font-size:11px;">IN WORDS</div>
+                                <div class="fw-bold">{{ $this->amountInWords }}</div>
+                            </div>
+                            
+                            <div class="fw-bold mb-1">Note :</div>
+                            <ul class="ps-3 mb-0" style="font-size:11px;">
+                                <li>Goods once sold will not be taken back.</li>
+                                <li>Please check medicines before leaving the counter.</li>
+                                <li>Keep medicines out of reach of children.</li>
+                            </ul>
+                        </div>
+
+                        <!-- RIGHT BOX -->
+                        <div class="col-6 ps-3 border-start" style="border-color:#aaa !important;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Gross Amount (Before Discount)</span>
+                                <span class="fw-bold">₹{{ number_format($lastSale->total_amount + ($lastSale->discount_amount ?? 0), 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Discount %</span>
+                                <span class="fw-bold">{{ number_format($lastSale->discount_percent ?? 0, 0) }}%</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 text-danger border-bottom border-dashed pb-2">
+                                <span>Discount Amount</span>
+                                <span class="fw-bold">-₹{{ number_format($lastSale->discount_amount ?? 0, 2) }}</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-2 mt-2">
+                                <span>Taxable Amount</span>
+                                <span class="fw-bold">₹{{ number_format($lastSale->total_amount - $gstTotal, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>GST %</span>
+                                <span class="fw-bold">—</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 border-bottom border-dark pb-2">
+                                <span>GST Amount</span>
+                                <span class="fw-bold">₹{{ number_format($gstTotal, 2) }}</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-2 align-items-center" style="color:#006644;">
+                                <span class="fw-bold" style="font-size:14px;">NET AMOUNT (Payable)</span>
+                                <span class="fw-bolder" style="font-size:18px;">₹{{ number_format($lastSale->total_amount, 2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTTOM AMOUNT BOXES -->
+                    <div class="d-flex mt-4 pt-3 border-top" style="border-color:#aaa !important; font-size:12px;">
+                        <div class="flex-grow-1 d-flex align-items-center">
+                            <div class="d-flex align-items-center gap-2 me-5">
+                                <div class="rounded-circle border border-dark d-flex justify-content-center align-items-center" style="width:32px; height:32px;">
+                                    <i class="bi bi-currency-rupee fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted">Amount Received</div>
+                                    <div class="fw-bold fs-6">₹{{ number_format($lastSale->amount_paid, 2) }}</div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded border border-dark d-flex justify-content-center align-items-center" style="width:40px; height:28px;">
+                                    <i class="bi bi-cash"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted">Amount Returned</div>
+                                    <div class="fw-bold fs-6">₹{{ number_format(max(0, $lastSale->amount_paid - $lastSale->total_amount), 2) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="border border-dark rounded px-4 py-2 text-center" style="color:#006644; border-width:2px !important;">
+                                <div class="text-muted" style="color:#333 !important;">Total Payable</div>
+                                <div class="fw-bolder fs-4">₹{{ number_format($lastSale->total_amount, 2) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SIGNATURES -->
+                    <div class="d-flex justify-content-between align-items-end mt-5 pt-3" style="font-size:12px;">
+                        <div class="text-center" style="width:180px;">
+                            <div class="border-top border-dark border-dashed pt-1" style="border-style:dashed !important;">Customer Signature</div>
+                        </div>
+                        <div class="text-center fw-bold text-success fs-6">
+                            Thank you! Visit Again
+                        </div>
+                        <div class="text-center" style="width:180px;">
+                            <div class="border-top border-dark border-dashed pt-1" style="border-style:dashed !important;">Authorised Signatory</div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER BAR -->
+                    <div class="mt-4 p-2 rounded text-white d-flex justify-content-between align-items-center px-4" style="background:#006644; font-size:12px;">
+                        <div>GSTIN : {{ auth()->user()->store?->gst_number ?? '08ABCDE1234F1Z5' }}</div>
+                        <div><i class="bi bi-telephone-fill"></i> {{ auth()->user()->store?->phone ?? '9887665321' }}</div>
+                        <div><i class="bi bi-globe"></i> {{ auth()->user()->store?->website ?? 'Website Not Set' }}</div>
+                    </div>
+                    
                 </div>
             </div>
         </div>
-
         <style>
+            .border-dashed { border-style: dashed !important; }
             @media print {
                 body * { visibility: hidden; }
                 .pos-fullscreen, .pos-fullscreen * { visibility: visible; }
-                .pos-fullscreen { position: absolute; left: 0; top: 0; width: 100%; background: white !important; }
+                .pos-fullscreen { position: absolute; left: 0; top: 0; width: 100%; background: white !important; z-index: 999999; }
                 .no-print { display: none !important; }
+                .print-wrapper { width: 100% !important; max-height: none !important; box-shadow: none !important; border: none !important; margin: 0 !important; }
+                #print-area { padding: 0 !important; width: 100% !important; }
+                @page { size: auto; margin: 5mm; }
             }
         </style>
     @endif
