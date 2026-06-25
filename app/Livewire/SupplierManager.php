@@ -29,7 +29,7 @@ class SupplierManager extends Component
     // Temp Item Inputs
     public $selectedMedId, $batchNo, $expiryDate, $qty, $pPrice, $sPrice, $reorderPoint = 10;
     public $unitsPerStrip = 1, $locSection, $locColumn;
-    public $discPercent = 0, $gstPercent = 0;
+    public $discPercent = 0;
 
     // Ledger View
     public $selectedSupplierId;
@@ -62,14 +62,7 @@ class SupplierManager extends Component
 
     public function updatedSelectedMedId($value)
     {
-        if ($value) {
-            $med = Medicine::find($value);
-            if ($med) {
-                $this->gstPercent = $med->gst_percent ?? 0;
-            }
-        } else {
-            $this->gstPercent = 0;
-        }
+        // No longer fetching gst_percent from Medicine
     }
 
     public function changeTab($tab, $id = null)
@@ -144,8 +137,7 @@ class SupplierManager extends Component
         $gross = $this->qty * $this->pPrice;
         $discountAmount = $gross * ($this->discPercent / 100);
         $taxable = $gross - $discountAmount;
-        $gstAmount = $taxable * ($this->gstPercent / 100);
-        $total = $taxable + $gstAmount;
+        $total = $taxable;
 
         $this->purchaseItems[] = [
             'medicine_id' => $med->id,
@@ -160,11 +152,10 @@ class SupplierManager extends Component
             'sales_price' => $this->sPrice,
             'reorder_point' => $this->reorderPoint,
             'disc_percent' => $this->discPercent,
-            'gst_percent' => $this->gstPercent,
             'total' => $total
         ];
 
-        $this->reset(['selectedMedId', 'batchNo', 'expiryDate', 'qty', 'pPrice', 'sPrice', 'discPercent', 'gstPercent', 'unitsPerStrip', 'locSection', 'locColumn']);
+        $this->reset(['selectedMedId', 'batchNo', 'expiryDate', 'qty', 'pPrice', 'sPrice', 'discPercent', 'unitsPerStrip', 'locSection', 'locColumn']);
         $this->unitsPerStrip = 1;
     }
 
@@ -404,7 +395,6 @@ class SupplierManager extends Component
                 'sales_price' => $sPrice,
                 'reorder_point' => $batch->reorder_point,
                 'disc_percent' => 0,
-                'gst_percent' => 0,
                 'total' => $total
             ];
         }

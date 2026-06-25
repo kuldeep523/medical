@@ -295,17 +295,6 @@
                 @error('purpose') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
-            <div class="col-md-2">
-                <label class="erp-label">GST %</label>
-                <select wire:model="gst_percent" class="form-select form-select-sm rounded-0 erp-input">
-                    <option value="0">0%</option>
-                    <option value="5">5%</option>
-                    <option value="12">12%</option>
-                    <option value="18">18%</option>
-                    <option value="28">28%</option>
-                </select>
-                @error('gst_percent') <div class="erp-error">{{ $message }}</div> @enderror
-            </div>
 
             <div class="col-md-4">
                 <label class="erp-label">REORDER POINT</label>

@@ -24,7 +24,6 @@ class PharmacyPortal extends Component
     public $purpose;
     public $power_mg;
     public $brand_name;
-    public $gst_percent = 0;
 
     public $reorder_point = 10;
 
@@ -92,7 +91,7 @@ class PharmacyPortal extends Component
         if ($view === 'create') {
             $this->reset([
                 'medId', 'name', 'image', 'rx_salt', 'purpose', 'power_mg',
-                'brand_name', 'gst_percent'
+                'brand_name'
             ]);
             $this->reorder_point = 10;
 
@@ -104,7 +103,6 @@ class PharmacyPortal extends Component
             $this->purpose        = $medicine->purpose;
             $this->power_mg       = $medicine->power_mg;
             $this->brand_name     = $medicine->brand_name;
-            $this->gst_percent    = $medicine->gst_percent;
             $this->reorder_point  = $medicine->reorder_point;
         }
     }
@@ -120,7 +118,6 @@ class PharmacyPortal extends Component
             'rx_salt'         => 'nullable|string|max:255',
             'power_mg'        => 'nullable|string|max:255',
             'reorder_point'   => 'nullable|integer|min:0',
-            'gst_percent'     => 'nullable|numeric|min:0',
             'purpose'         => 'nullable|string|max:1000',
         ];
 
@@ -145,7 +142,6 @@ class PharmacyPortal extends Component
                 'purpose'          => $this->purpose,
                 'power_mg'         => $this->power_mg,
                 'reorder_point'    => $this->reorder_point,
-                'gst_percent'      => $this->gst_percent ?: 0,
                 'image'            => $imagePath ?: $medicine->image,
             ]);
             session()->flash('status', "Medicine '{$this->name}' updated successfully.");
@@ -167,7 +163,6 @@ class PharmacyPortal extends Component
                 'purpose'          => $this->purpose,
                 'power_mg'         => $this->power_mg,
                 'reorder_point'    => $this->reorder_point,
-                'gst_percent'      => $this->gst_percent ?: 0,
                 'image'            => $imagePath,
                 'user_id'          => auth()->id(),
                 'store_id'         => null,

@@ -23,7 +23,6 @@ class Medicine extends Model
         'power_mg',
         'brand_name',
         'reorder_point',
-        'gst_percent',
         'user_id',
         'store_id',
     ];
