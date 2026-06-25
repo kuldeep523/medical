@@ -62,6 +62,9 @@
             <a href="{{ route('admin.dashboard') }}" class="sidebar-btn {{ request()->routeIs('admin.portal') ? 'active' : '' }}">
                 <i class="bi bi-shield-fill-check me-1"></i> Admin Portal
             </a>
+            <a href="{{ route('pharmacy.index') }}" class="sidebar-btn {{ request()->routeIs('pharmacy.index') ? 'active' : '' }}">
+                <i class="bi bi-capsule me-1"></i> Medicine Master
+            </a>
             <a href="{{ route('admin.dashboard') }}" class="sidebar-btn">
                 <i class="bi bi-shop me-1"></i> Manage Stores
             </a>
@@ -95,7 +98,7 @@
             <a href="{{ route('accounting.index', ['tab' => 'inventory']) }}" class="sidebar-btn {{ request()->query('tab') === 'inventory' ? 'active' : '' }}">Re-Order</a>
             <a href="{{ route('accounting.index', ['tab' => 'sales_book']) }}" class="sidebar-btn {{ request()->query('tab') === 'sales_book' ? 'active' : '' }}">Sales Book</a>
             <a href="#" class="sidebar-btn">Dispatch Summary</a>
-            <a href="#" class="sidebar-btn">Bill Taging</a>
+            <a href="{{ route('accounting.index', ['tab' => 'sales_book']) }}" class="sidebar-btn {{ request()->query('tab') === 'sales_book' ? 'active' : '' }}">Bill Tagging</a>
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Daily Analysis (MIS)</a>
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Todays Gross Profit</a>
             <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="sidebar-btn text-danger mt-auto">Exit</a>

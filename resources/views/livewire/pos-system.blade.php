@@ -122,9 +122,13 @@
             </div>
             <!-- Row 4 -->
             <div class="row g-0 p-1 pos-info-row">
-                <div class="col-12 d-flex align-items-center">
+                <div class="col-4 d-flex align-items-center">
                     <span class="lbl" style="width:85px;">Reg. No.:</span>
                     <input type="text" wire:model="doctor_register_no"  class="form-control form-control-sm border-0 bg-transparent p-0" style="font-size:11px;" placeholder="{{ $lastSale ? 'Auto-filled' : 'Registration No' }}">
+                </div>
+                <div class="col-4 d-flex align-items-center">
+                    <span class="lbl" style="width:85px;">Bill Tag:</span>
+                    <input type="text" wire:model="bill_tag" class="form-control form-control-sm border-0 bg-transparent p-0 fw-bold" style="font-size:11px;color:#b45309;" placeholder="e.g. VIP, Morning Rush">
                 </div>
             </div>
         </div>
@@ -569,6 +573,9 @@
                     </div>
                     @if($lastSale->doctor_name)
                         <div class="mt-1"><strong>Doctor:</strong> {{ $lastSale->doctor_name }}</div>
+                    @endif
+                    @if($lastSale->bill_tag)
+                        <div class="mt-1"><strong style="color:#008080;">Tag:</strong> {{ $lastSale->bill_tag }}</div>
                     @endif
                 </div>
 

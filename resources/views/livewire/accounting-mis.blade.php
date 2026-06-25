@@ -292,7 +292,12 @@
                                     {{ $s->bill_no }}
                                 </a>
                             </td>
-                            <td class="text-start ps-2">{{ $s->customer_name ?: 'Walk-in' }}</td>
+                            <td class="text-start ps-2">
+                                {{ $s->customer_name ?: 'Walk-in' }}
+                                @if($s->bill_tag)
+                                    <span class="badge bg-warning text-dark ms-1 py-0 px-1 border border-warning" style="font-size:8px;">{{ $s->bill_tag }}</span>
+                                @endif
+                            </td>
                             <td class="text-end pe-2 fw-bold text-primary">₹{{ number_format($s->total_amount, 2) }}</td>
                             <td>
                                 <span class="badge rounded-0 border {{ $s->amount_paid >= $s->total_amount ? 'text-success border-success' : 'text-warning border-warning' }}" style="font-size:9px;">
@@ -352,6 +357,7 @@
                                     @if($selectedSale->patient_address) <div><strong>Address:</strong> {{ $selectedSale->patient_address }}</div> @endif
                                     @if($selectedSale->doctor_name) <div><strong>Doctor Name:</strong> {{ $selectedSale->doctor_name }}</div> @endif
                                     @if($selectedSale->doctor_number) <div><strong>Doctor Phone:</strong> {{ $selectedSale->doctor_number }}</div> @endif
+                                    @if($selectedSale->bill_tag) <div><strong style="color:#008080;">Bill Tag:</strong> {{ $selectedSale->bill_tag }}</div> @endif
                                 </div>
                             @endif
                         </div>
@@ -412,23 +418,7 @@
                 </div>
             </div>
         </div>
-        <script>
-            function printModalBill() {
-                var printWindow = window.open('', '_blank', 'height=600,width=500');
-                printWindow.document.write('<html><head><title>Print Bill</title>');
-                printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">');
-                printWindow.document.write('<style>body{padding:20px; font-family:"Segoe UI",sans-serif;}</style>');
-                printWindow.document.write('</head><body>');
-                printWindow.document.write(document.getElementById('print-bill-area').innerHTML);
-                printWindow.document.write('</body></html>');
-                printWindow.document.close();
-                printWindow.focus();
-                setTimeout(function () {
-                    printWindow.print();
-                    printWindow.close();
-                }, 250);
-            }
-        </script>
+
     @endif
 
     {{-- ── Edit Sale Modal ────────────────────────────── --}}
@@ -480,6 +470,30 @@
             </div>
         </div>
     @endif
+
+    {{-- ── Print Script ─────────────────────────────────── --}}
+    <script>
+        function printModalBill() {
+            var printArea = document.getElementById('print-bill-area');
+            if (!printArea) {
+                alert('No bill to print');
+                return;
+            }
+            var printWindow = window.open('', '_blank', 'height=600,width=500');
+            printWindow.document.write('<html><head><title>Print Bill</title>');
+            printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">');
+            printWindow.document.write('<style>body{padding:20px; font-family:"Segoe UI",sans-serif;}</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(printArea.innerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(function () {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
+    </script>
 
     {{-- ── Scoped CSS ───────────────────────────────────── --}}
     <style>

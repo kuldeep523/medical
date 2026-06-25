@@ -162,7 +162,7 @@ class PosSystem extends Component
         $this->inputTablets     = 1;
         $this->inputQuantity    = 1;
         $this->inputPrice       = 0;
-        $this->inputTaxPercent  = 0;
+        $this->inputTaxPercent  = $this->selectedMedicine->gst_percent ?? 0;
 
         $this->searchQuery   = '';
         $this->searchResults = [];
@@ -343,7 +343,7 @@ class PosSystem extends Component
         $this->inputPrice       = 0;
         $this->inputStrips      = 0;
         $this->inputTablets     = 1;
-        $this->inputTaxPercent  = 0;
+        $this->inputTaxPercent  = $this->selectedMedicine ? ($this->selectedMedicine->gst_percent ?? 0) : 0;
         $this->searchQuery      = '';
         $this->searchResults    = [];
         $this->dispatch('focus-search');

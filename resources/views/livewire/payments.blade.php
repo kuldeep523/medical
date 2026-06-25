@@ -84,7 +84,7 @@
                     <th style="width: 11%;">AMOUNT PAID</th>
                     <th style="width: 11%;">PENDING DUE</th>
                     <th style="width: 10%;">PAYMENT MODE</th>
-                    <th style="width: 8%;">ACTION</th>
+                    <th style="width: 10%;">ACTION</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,6 +123,10 @@
                                     class="btn {{ $isCleared ? 'btn-outline-teal' : 'btn-teal text-white' }} btn-sm py-0 px-2 fw-bold" style="font-size: 9px;">
                                 <i class="bi {{ $isCleared ? 'bi-eye' : 'bi-credit-card' }} me-1"></i>{{ $isCleared ? 'VIEW' : 'PAY' }}
                             </button>
+                            <a href="{{ route('suppliers.index', ['edit_purchase' => $purchase->id]) }}" 
+                               class="btn btn-outline-primary btn-sm py-0 px-2 fw-bold ms-1" style="font-size: 9px;" title="Edit Purchase Bill">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
                         </td>
                     </tr>
                 @empty

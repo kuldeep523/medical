@@ -31,6 +31,7 @@ class AccountingMis extends Component
     public $editCustomerPhone = '';
     public $editPatientName = '';
     public $editPaymentMethod = 'Cash';
+    public $editBillTag = '';
 
     public function mount()
     {
@@ -121,6 +122,7 @@ class AccountingMis extends Component
         $this->editCustomerPhone = $sale->customer_phone ?? '';
         $this->editPatientName = $sale->patient_name ?? '';
         $this->editPaymentMethod = $sale->payment_method ?? 'Cash';
+        $this->editBillTag = $sale->bill_tag ?? '';
         $this->isEditSaleModalOpen = true;
     }
 
@@ -139,6 +141,7 @@ class AccountingMis extends Component
                 'customer_phone' => $this->editCustomerPhone,
                 'patient_name' => $this->editPatientName,
                 'payment_method' => $this->editPaymentMethod,
+                'bill_tag' => $this->editBillTag,
             ]);
             session()->flash('status', 'Sale invoice details updated successfully.');
             $this->closeEditSaleModal();

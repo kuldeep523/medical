@@ -96,7 +96,12 @@
                         <tr class="{{ $med->total_stock <= $med->reorder_point ? 'erp-low-stock' : '' }}">
                             <td class="text-center text-muted">{{ $i + 1 }}</td>
                             <td class="text-break">
-                                <div class="fw-bold">{{ $med->name }}</div>
+                                <div class="fw-bold">
+                                    {{ $med->name }}
+                                    @if($med->created_at && date('Y-m-d', strtotime($med->created_at)) == date('Y-m-d'))
+                                        <span class="badge bg-warning text-dark ms-1 py-0 px-1 border border-warning" style="font-size:8px;">NEW</span>
+                                    @endif
+                                </div>
                                 <div class="text-muted" style="font-size:10px;">{{ $med->brand_name }}</div>
                             </td>
                             <td class="text-primary fw-semibold text-break">{{ $med->rx_salt }}</td>
@@ -248,7 +253,7 @@
                 <button type="submit" class="erp-btn-primary" wire:loading.attr="disabled">
                     <span wire:loading.remove wire:target="processStockIn"><i class="bi bi-check2-circle"></i> RECORD ARRIVAL</span>
                     <span wire:loading wire:target="processStockIn">Saving…</span>
-                </button>
+                </button> 
                 <button type="button" wire:click="changeView('list')" class="erp-btn-secondary ms-2">CANCEL</button>
             </div>
         </form>
@@ -288,6 +293,18 @@
                 <label class="erp-label">PURPOSE / USE CASE</label>
                 <input type="text" wire:model="purpose" class="form-control form-control-sm rounded-0 erp-input" />
                 @error('purpose') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-2">
+                <label class="erp-label">GST %</label>
+                <select wire:model="gst_percent" class="form-select form-select-sm rounded-0 erp-input">
+                    <option value="0">0%</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18">18%</option>
+                    <option value="28">28%</option>
+                </select>
+                @error('gst_percent') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
             <div class="col-md-4">

@@ -116,7 +116,12 @@
     {{-- VIEW: PURCHASE ENTRY                                --}}
     {{-- ════════════════════════════════════════════════════ --}}
     @elseif($activeTab === 'purchase')
-        <div class="erp-form-header">NEW PURCHASE INVOICE ENTRY</div>
+        <div class="erp-form-header d-flex justify-content-between align-items-center">
+            <span>{{ $editingPurchaseId ? 'EDITING PURCHASE INVOICE ENTRY' : 'NEW PURCHASE INVOICE ENTRY' }}</span>
+            @if($editingPurchaseId)
+                <button wire:click="cancelEditPurchase" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:10px; font-weight:bold;">CANCEL EDIT</button>
+            @endif
+        </div>
         <div class="p-2 border-bottom bg-light">
             <div class="row g-2">
                 <div class="col-md-3">
@@ -285,7 +290,7 @@
                     @error('payment_mode') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-5 text-end">
-                    <button wire:click="savePurchase" class="erp-btn-primary" style="padding:8px 30px; font-size:12px;">FINALIZE PURCHASE BILL</button>
+                    <button wire:click="savePurchase" class="erp-btn-primary" style="padding:8px 30px; font-size:12px;">{{ $editingPurchaseId ? 'UPDATE PURCHASE BILL' : 'FINALIZE PURCHASE BILL' }}</button>
                 </div>
             </div>
         </div>
@@ -320,7 +325,8 @@
                             <td class="text-danger fw-bold">₹{{ number_format($p->total_amount - $p->paid_amount, 2) }}</td>
                             <td><span class="badge bg-light border text-dark rounded-0">{{ $p->payment_mode }}</span></td>
                             <td>
-                                <button wire:click="openEditPurchaseModal({{ $p->id }})" class="btn btn-sm btn-outline-primary py-0 px-2 fw-bold" style="font-size:9px;" title="Edit Bill Details"><i class="bi bi-pencil-square"></i></button>
+                                <button wire:click="openEditPurchaseModal({{ $p->id }})" class="btn btn-sm btn-outline-primary py-0 px-2 fw-bold" style="font-size:9px;" title="Edit Bill Meta"><i class="bi bi-card-text"></i></button>
+                                <button wire:click="editFullPurchase({{ $p->id }})" class="btn btn-sm btn-outline-success py-0 px-2 fw-bold ms-1" style="font-size:9px;" title="Edit Full Bill"><i class="bi bi-pencil-square"></i></button>
                                 <button onclick="confirm('WARNING: Deleting this purchase will decrement Paracetamol/medicine stock batch quantities and subtract any outstanding due from the supplier ledger. Proceed?') || event.stopImmediatePropagation()" wire:click="deletePurchase({{ $p->id }})" class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold ms-1" style="font-size:9px;" title="Delete Purchase Bill"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>

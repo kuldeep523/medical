@@ -21,6 +21,7 @@ class SupplierManager extends Component
     public $vendorId, $vendorName, $vendorMobile, $vendorGst, $vendorAddress;
 
     // Purchase Form
+    public $editingPurchaseId = null;
     public $supplier_id, $bill_number, $bill_date, $payment_mode = 'Cash', $paid_amount = 0;
     public $bill_file;
     public $purchaseItems = []; // Array of batch info
@@ -54,6 +55,21 @@ class SupplierManager extends Component
     public function mount()
     {
         $this->bill_date = date('Y-m-d');
+        if (request()->has('edit_purchase')) {
+            $this->editFullPurchase(request()->query('edit_purchase'));
+        }
+    }
+
+    public function updatedSelectedMedId($value)
+    {
+        if ($value) {
+            $med = Medicine::find($value);
+            if ($med) {
+                $this->gstPercent = $med->gst_percent ?? 0;
+            }
+        } else {
+            $this->gstPercent = 0;
+        }
     }
 
     public function changeTab($tab, $id = null)
@@ -183,53 +199,89 @@ class SupplierManager extends Component
         $supplier = Supplier::findOrFail($this->supplier_id);
         $paid = (float) ($this->paid_amount ?: 0);
 
-        // 1. Create Purchase Record
-        $purchase = Purchase::create([
-            'supplier_id' => $this->supplier_id,
-            'bill_number' => $this->bill_number,
-            'bill_date' => $this->bill_date,
-            'total_amount' => $totalBill,
-            'paid_amount' => $paid,
-            'payment_mode' => $this->payment_mode,
-            'user_id' => auth()->id(),
-            'store_id' => auth()->user()->store_id,
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($totalBill, $paid, $supplier, $billPath) {
+            if ($this->editingPurchaseId) {
+                $purchase = Purchase::findOrFail($this->editingPurchaseId);
+                
+                // Reverse old effects
+                $oldDue = $purchase->total_amount - $purchase->paid_amount;
+                if ($oldDue > 0) {
+                    $oldSupplier = Supplier::findOrFail($purchase->supplier_id);
+                    $oldSupplier->decrement('current_balance', $oldDue);
+                }
+                
+                $oldBillPath = null;
+                $batches = MedicineBatch::where('purchase_id', $purchase->id)->get();
+                foreach ($batches as $batch) {
+                    if (!$oldBillPath && $batch->vendor_bill_path) {
+                        $oldBillPath = $batch->vendor_bill_path;
+                    }
+                    $batch->delete();
+                }
+                
+                if (!$billPath) {
+                    $billPath = $oldBillPath; // Keep old file if new one is not uploaded
+                }
 
-        // 2. Create Batches
-        foreach ($this->purchaseItems as $item) {
-            $med = Medicine::findOrFail($item['medicine_id']);
-            $unitsPerStrip = max(1, $item['units_per_strip'] ?? 1);
-            $totalUnits = $item['quantity'] * $unitsPerStrip;
-            
-            MedicineBatch::create([
-                'medicine_id' => $item['medicine_id'],
-                'batch_no' => $item['batch_no'],
-                'expiry_date' => $item['expiry_date'],
-                'quantity' => $totalUnits, // Storing in total units/tablets
-                'purchase_price' => $item['purchase_price'] / $unitsPerStrip,
-                'sales_price' => $item['sales_price'] / $unitsPerStrip,
-                'units_per_strip' => $unitsPerStrip,
-                'location_section' => $item['location_section'] ?? null,
-                'location_column' => $item['location_column'] ?? null,
-                'reorder_point' => $item['reorder_point'],
-                'purchase_id' => $purchase->id,
-                'vendor_name' => $supplier->name,
-                'vendor_bill_path' => $billPath,
-                'amount_paid_to_vendor' => $paid,
-                'user_id' => auth()->id(),
-                'store_id' => auth()->user()->store_id,
-            ]);
-        }
+                $purchase->update([
+                    'supplier_id' => $this->supplier_id,
+                    'bill_number' => $this->bill_number,
+                    'bill_date' => $this->bill_date,
+                    'total_amount' => $totalBill,
+                    'paid_amount' => $paid,
+                    'payment_mode' => $this->payment_mode,
+                ]);
+            } else {
+                // 1. Create Purchase Record
+                $purchase = Purchase::create([
+                    'supplier_id' => $this->supplier_id,
+                    'bill_number' => $this->bill_number,
+                    'bill_date' => $this->bill_date,
+                    'total_amount' => $totalBill,
+                    'paid_amount' => $paid,
+                    'payment_mode' => $this->payment_mode,
+                    'user_id' => auth()->id(),
+                    'store_id' => auth()->user()->store_id,
+                ]);
+            }
 
-        // 3. Update Supplier Balance if Due
-        $due = $totalBill - $paid;
-        if ($due > 0) {
-            $supplier = Supplier::findOrFail($this->supplier_id);
-            $supplier->increment('current_balance', $due);
-        }
+            // 2. Create Batches
+            foreach ($this->purchaseItems as $item) {
+                $med = Medicine::findOrFail($item['medicine_id']);
+                $unitsPerStrip = max(1, $item['units_per_strip'] ?? 1);
+                $totalUnits = $item['quantity'] * $unitsPerStrip;
+                
+                MedicineBatch::create([
+                    'medicine_id' => $item['medicine_id'],
+                    'batch_no' => $item['batch_no'],
+                    'expiry_date' => $item['expiry_date'],
+                    'quantity' => $totalUnits, // Storing in total units/tablets
+                    'purchase_price' => $item['purchase_price'] / $unitsPerStrip,
+                    'sales_price' => $item['sales_price'] / $unitsPerStrip,
+                    'units_per_strip' => $unitsPerStrip,
+                    'location_section' => $item['location_section'] ?? null,
+                    'location_column' => $item['location_column'] ?? null,
+                    'reorder_point' => $item['reorder_point'],
+                    'purchase_id' => $purchase->id,
+                    'vendor_name' => $supplier->name,
+                    'vendor_bill_path' => $billPath,
+                    'amount_paid_to_vendor' => $paid,
+                    'user_id' => auth()->id(),
+                    'store_id' => auth()->user()->store_id,
+                ]);
+            }
 
+            // 3. Update Supplier Balance if Due
+            $due = $totalBill - $paid;
+            if ($due > 0) {
+                $supplier->increment('current_balance', $due);
+            }
+        });
+
+        $msg = $this->editingPurchaseId ? 'Purchase bill updated successfully.' : 'Purchase recorded successfully.';
+        $this->editingPurchaseId = null;
         $this->reset(['supplier_id', 'bill_number', 'paid_amount', 'purchaseItems', 'bill_file']);
-        session()->flash('status', 'Purchase recorded successfully.');
+        session()->flash('status', $msg);
         $this->activeTab = 'history';
     }
 
@@ -316,6 +368,56 @@ class SupplierManager extends Component
         $s->delete();
         session()->flash('status', 'Supplier deleted successfully.');
         $this->resetVendorFields();
+    }
+
+    public function editFullPurchase($id)
+    {
+        $purchase = Purchase::with('batches.medicine')->findOrFail($id);
+        
+        $this->editingPurchaseId = $purchase->id;
+        $this->supplier_id = $purchase->supplier_id;
+        $this->bill_number = $purchase->bill_number;
+        $this->bill_date = date('Y-m-d', strtotime($purchase->bill_date));
+        $this->payment_mode = $purchase->payment_mode ?: 'Cash';
+        $this->paid_amount = $purchase->paid_amount;
+        
+        $this->purchaseItems = [];
+        foreach ($purchase->batches as $batch) {
+            $unitsPerStrip = max(1, $batch->units_per_strip);
+            $qty = $batch->quantity / $unitsPerStrip;
+            $pPrice = $batch->purchase_price * $unitsPerStrip;
+            $sPrice = $batch->sales_price * $unitsPerStrip;
+            
+            // Assume 0% for gst and discount since it's not stored in MedicineBatch
+            $total = $qty * $pPrice;
+            
+            $this->purchaseItems[] = [
+                'medicine_id' => $batch->medicine_id,
+                'medicine_name' => $batch->medicine ? $batch->medicine->name : 'Unknown',
+                'batch_no' => $batch->batch_no,
+                'expiry_date' => date('Y-m-d', strtotime($batch->expiry_date)),
+                'quantity' => $qty,
+                'units_per_strip' => $unitsPerStrip,
+                'location_section' => $batch->location_section,
+                'location_column' => $batch->location_column,
+                'purchase_price' => $pPrice,
+                'sales_price' => $sPrice,
+                'reorder_point' => $batch->reorder_point,
+                'disc_percent' => 0,
+                'gst_percent' => 0,
+                'total' => $total
+            ];
+        }
+        
+        $this->activeTab = 'purchase';
+    }
+
+    public function cancelEditPurchase()
+    {
+        $this->editingPurchaseId = null;
+        $this->reset(['supplier_id', 'bill_number', 'paid_amount', 'purchaseItems', 'bill_file']);
+        $this->bill_date = date('Y-m-d');
+        $this->activeTab = 'history';
     }
 
     public function openEditPurchaseModal($purchaseId): void
