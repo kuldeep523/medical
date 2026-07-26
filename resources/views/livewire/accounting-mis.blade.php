@@ -293,7 +293,7 @@
                                 </a>
                             </td>
                             <td class="text-start ps-2">
-                                {{ $s->customer_name ?: 'Walk-in' }}
+                                {{ $s->patient_name ?: ($s->customer_name ?: 'Walk-in') }}
                                 @if($s->bill_tag)
                                     <span class="badge bg-warning text-dark ms-1 py-0 px-1 border border-warning" style="font-size:8px;">{{ $s->bill_tag }}</span>
                                 @endif
@@ -351,11 +351,11 @@
                                 <span><strong>Patient Name:</strong> {{ $selectedSale->patient_name ?: 'CASH' }}</span>
                                 <span><strong>Method:</strong> {{ $selectedSale->payment_method }} ({{ $selectedSale->order_type }})</span>
                             </div>
-                            @if($selectedSale->customer_phone || $selectedSale->patient_address || $selectedSale->doctor_name || $selectedSale->doctor_number)
+                            @if($selectedSale->customer_phone || $selectedSale->patient_address || $selectedSale->doctor_name || $selectedSale->doctor_number || true)
                                 <div class="mt-2 p-2 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 10px;">
                                     @if($selectedSale->customer_phone) <div><strong>Patient Phone:</strong> {{ $selectedSale->customer_phone }}</div> @endif
                                     @if($selectedSale->patient_address) <div><strong>Address:</strong> {{ $selectedSale->patient_address }}</div> @endif
-                                    @if($selectedSale->doctor_name) <div><strong>Doctor Name:</strong> {{ $selectedSale->doctor_name }}</div> @endif
+                                    <div><strong>Doctor Name:</strong> {{ $selectedSale->doctor_name ? 'Dr. ' . str_replace('Dr. ', '', $selectedSale->doctor_name) : 'Self' }}</div>
                                     @if($selectedSale->doctor_number) <div><strong>Doctor Phone:</strong> {{ $selectedSale->doctor_number }}</div> @endif
                                     @if($selectedSale->bill_tag) <div><strong style="color:#008080;">Bill Tag:</strong> {{ $selectedSale->bill_tag }}</div> @endif
                                 </div>

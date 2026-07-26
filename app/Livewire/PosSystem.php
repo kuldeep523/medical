@@ -452,7 +452,7 @@ class PosSystem extends Component
                 $sale = new Sale([
                     'user_id'          => auth()->id(),
                     'store_id'         => auth()->user()->store_id,
-                    'bill_no'          => 'INV-'.strtoupper(Str::random(8)),
+                    'bill_no'          => 'INV-' . str_pad((Sale::where('store_id', auth()->user()->store_id)->max('id') ?? 0) + 1, 6, '0', STR_PAD_LEFT),
                     'total_amount'     => $this->grandTotal,
                     'customer_name'    => $this->customer_name,
                     'customer_phone'   => $this->customer_phone,

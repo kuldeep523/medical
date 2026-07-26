@@ -33,15 +33,6 @@ class Doctor extends Model
         'is_active' => 'boolean',
     ];
 
-    /** Auto-scope every query to the logged-in user's store. */
-    protected static function booted(): void
-    {
-        static::addGlobalScope('store', function (\Illuminate\Database\Eloquent\Builder $q) {
-            if (auth()->check() && auth()->user()->store_id) {
-                $q->where('store_id', auth()->user()->store_id);
-            }
-        });
-    }
 
     public function sales()
     {

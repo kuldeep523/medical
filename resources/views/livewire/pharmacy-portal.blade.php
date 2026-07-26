@@ -1,5 +1,8 @@
-<div class="pharmacy-container bg-white border border-secondary border-opacity-25" style="font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px;">
-
+<div x-data="{ isFs: true }" 
+     @keydown.window.escape="isFs = !isFs"
+     :class="isFs ? 'pos-fullscreen' : 'pos-windowed'"
+     class="pharmacy-container bg-white border border-secondary border-opacity-25" 
+     style="font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; transition: all 0.2s; min-height: 100vh; overflow-x: hidden;">
     {{-- ── Flash Alerts ─────────────────────────────────── --}}
     @if (session()->has('status'))
         <div class="erp-alert erp-alert-success">
@@ -59,6 +62,10 @@
             @else
                 <button wire:click="changeView('list')"    class="erp-hdr-btn"><i class="bi bi-arrow-left"></i> Back to List</button>
             @endif
+            <button @click="isFs = !isFs" class="erp-hdr-btn ms-2 border-start border-white border-opacity-50 ps-2">
+                <span x-show="!isFs">⛶ FULL SCREEN</span>
+                <span x-show="isFs">⊠ EXIT (ESC)</span>
+            </button>
         </div>
     </div>
 
@@ -73,7 +80,15 @@
                     <input type="text" wire:model.live="searchSalt" class="form-control border-start-0 rounded-0" placeholder="Search medicine, salt, purpose…" style="font-size:11px;">
                 </div>
             </div>
-            <span class="text-muted" style="font-size:11px;">{{ count($medicines) }} record(s)</span>
+            <div class="text-muted d-flex align-items-center gap-3" style="font-size:11px;">
+                <span>Total: {{ $totalRecords }} record(s)</span>
+                
+                <div class="btn-group btn-group-sm">
+                    <button wire:click="prevPage" class="btn btn-outline-secondary py-0 px-2" style="font-size:11px;" @if($currentPage <= 1) disabled @endif>Prev</button>
+                    <span class="btn btn-secondary py-0 px-2 disabled text-dark bg-white border-secondary" style="font-size:11px;opacity:1;">Page {{ $currentPage }} of {{ $totalPages }}</span>
+                    <button wire:click="nextPage" class="btn btn-outline-secondary py-0 px-2" style="font-size:11px;" @if($currentPage >= $totalPages) disabled @endif>Next</button>
+                </div>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -179,13 +194,19 @@
                 @error('stockInUnitsPerStrip') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
-            <div class="col-md-3">
-                <label class="erp-label">QTY ({{ $selUnits > 1 ? 'strips' : 'units' }}) *</label>
+            <div class="col-md-2">
+                <label class="erp-label">PAID QTY *</label>
                 <input type="number" wire:model="stockInQuantity" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
                 @error('stockInQuantity') <div class="erp-error">{{ $message }}</div> @enderror
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <label class="erp-label">FREE QTY</label>
+                <input type="number" wire:model="stockInFreeQuantity" class="form-control form-control-sm rounded-0 erp-input" min="0" placeholder="0" />
+                @error('stockInFreeQuantity') <div class="erp-error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="col-md-2">
                 <label class="erp-label">EXPIRY DATE *</label>
                 <input type="date" wire:model="stockInExpiry" class="form-control form-control-sm rounded-0 erp-input" required />
                 @error('stockInExpiry') <div class="erp-error">{{ $message }}</div> @enderror
@@ -339,9 +360,14 @@
                         @error('batch_units_per_strip') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
-                        <label class="erp-label">QTY (units) *</label>
+                        <label class="erp-label">QTY (PAID) *</label>
                         <input type="number" wire:model="batch_quantity" class="form-control form-control-sm rounded-0 erp-input" min="1" required />
                         @error('batch_quantity') <div class="erp-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-6">
+                        <label class="erp-label">FREE QTY</label>
+                        <input type="number" wire:model="batch_free_quantity" class="form-control form-control-sm rounded-0 erp-input" min="0" placeholder="0" />
+                        @error('batch_free_quantity') <div class="erp-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-6">
                         <label class="erp-label">EXPIRY *</label>
@@ -520,6 +546,13 @@
 
     {{-- ── Scoped CSS ───────────────────────────────────── --}}
     <style>
+        .pos-fullscreen {
+            position: fixed !important; inset: 0 !important;
+            width: 100vw !important; height: 100vh !important;
+            z-index: 99999 !important; border: none !important;
+            overflow: auto;
+        }
+        .pos-windowed { width: 100%; height: 100%; min-height: 400px; }
         .erp-alert          { padding: 4px 12px; font-size: 12px; font-weight: 600; border-left: 3px solid; margin: 0; }
         .erp-alert-success  { background: #dcfce7; color: #166534; border-color: #22c55e; }
         .erp-alert-danger   { background: #fee2e2; color: #991b1b; border-color: #ef4444; }

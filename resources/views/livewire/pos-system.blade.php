@@ -74,7 +74,7 @@
                 </div>
                 <div class="col-4 d-flex align-items-center justify-content-end pe-2">
                     <span class="lbl" style="width:50px;">Bill No:</span>
-                    <span class="fw-bold" style="color:#008080;">A{{ str_pad(\App\Models\Sale::count() + 1, 6, '0', STR_PAD_LEFT) }}</span>
+                    <span class="fw-bold" style="color:#008080;">INV-{{ str_pad(\App\Models\Sale::where('store_id', auth()->user()->store_id)->max('id') + 1, 6, '0', STR_PAD_LEFT) }}</span>
                 </div>
             </div>
             <!-- Row 2 -->

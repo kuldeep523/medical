@@ -36,6 +36,16 @@ Route::middleware([
         return view('doctors.index');
     })->name('doctors.index');
 
+    // Dump Stock
+    Route::get('/dump-stock', function () {
+        return view('dump-stock.index');
+    })->name('dump-stock.index');
+
+    // Customer Reminders
+    Route::get('/reminders', function () {
+        return view('reminders.index');
+    })->name('reminders.index');
+
     // Accounting & MIS
     Route::get('/accounting', function () {
         return view('accounting.index');

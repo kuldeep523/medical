@@ -68,4 +68,12 @@ class Medicine extends Model
     {
         return $this->hasMany(MedicineBatch::class);
     }
+
+    /**
+     * Get the sale items for the medicine.
+     */ 
+    public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
 }

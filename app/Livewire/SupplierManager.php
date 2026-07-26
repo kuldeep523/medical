@@ -27,7 +27,7 @@ class SupplierManager extends Component
     public $purchaseItems = []; // Array of batch info
     
     // Temp Item Inputs
-    public $selectedMedId, $batchNo, $expiryDate, $qty, $pPrice, $sPrice, $reorderPoint = 10;
+    public $selectedMedId, $batchNo, $expiryDate, $qty, $freeQty, $pPrice, $sPrice, $reorderPoint = 10;
     public $unitsPerStrip = 1, $locSection, $locColumn;
     public $discPercent = 0, $gstPercent = 0;
 
@@ -127,6 +127,7 @@ class SupplierManager extends Component
             'batchNo' => 'required',
             'expiryDate' => 'required|date',
             'qty' => 'required|integer|min:1',
+            'freeQty' => 'nullable|integer|min:0',
             'pPrice' => 'required|numeric|min:0',
             'sPrice' => 'required|numeric|min:0',
             'unitsPerStrip' => 'required|integer|min:1',
@@ -145,6 +146,7 @@ class SupplierManager extends Component
             'batch_no' => $this->batchNo,
             'expiry_date' => $this->expiryDate,
             'quantity' => $this->qty,
+            'free_quantity' => $this->freeQty ?: 0,
             'units_per_strip' => $this->unitsPerStrip,
             'location_section' => $this->locSection,
             'location_column' => $this->locColumn,
@@ -156,7 +158,7 @@ class SupplierManager extends Component
             'total' => $total
         ];
 
-        $this->reset(['selectedMedId', 'batchNo', 'expiryDate', 'qty', 'pPrice', 'sPrice', 'discPercent', 'gstPercent', 'unitsPerStrip', 'locSection', 'locColumn']);
+        $this->reset(['selectedMedId', 'batchNo', 'expiryDate', 'qty', 'freeQty', 'pPrice', 'sPrice', 'discPercent', 'gstPercent', 'unitsPerStrip', 'locSection', 'locColumn']);
         $this->unitsPerStrip = 1;
     }
 
@@ -241,7 +243,8 @@ class SupplierManager extends Component
             foreach ($this->purchaseItems as $item) {
                 $med = Medicine::findOrFail($item['medicine_id']);
                 $unitsPerStrip = max(1, $item['units_per_strip'] ?? 1);
-                $totalUnits = $item['quantity'] * $unitsPerStrip;
+                $free = $item['free_quantity'] ?? 0;
+                $totalUnits = ($item['quantity'] + $free) * $unitsPerStrip;
                 
                 MedicineBatch::create([
                     'medicine_id' => $item['medicine_id'],
@@ -389,6 +392,7 @@ class SupplierManager extends Component
                 'batch_no' => $batch->batch_no,
                 'expiry_date' => date('Y-m-d', strtotime($batch->expiry_date)),
                 'quantity' => $qty,
+                'free_quantity' => 0,
                 'units_per_strip' => $unitsPerStrip,
                 'location_section' => $batch->location_section,
                 'location_column' => $batch->location_column,

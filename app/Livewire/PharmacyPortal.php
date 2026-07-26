@@ -15,6 +15,8 @@ class PharmacyPortal extends Component
 
     public $searchSalt = '';
     public $activeView = 'list';
+    public $currentPage = 1;
+    public $perPage = 20;
 
     // CRUD inputs
     public $medId;
@@ -41,6 +43,7 @@ class PharmacyPortal extends Component
     public $batch_bill_number;
     public $batch_payment_mode = 'Cash';
     public $batch_paid_amount = 0;
+    public $batch_free_quantity = 0;
     public $editingBatchId = null;
 
     // Stock-In inputs
@@ -58,6 +61,7 @@ class PharmacyPortal extends Component
     public $stockInBillNumber;
     public $stockInPaymentMode = 'Cash';
     public $stockInPaidAmount = 0;
+    public $stockInFreeQuantity = 0;
 
     // Stock Adjustment
     public $adjustmentAmount = 0;
@@ -83,7 +87,7 @@ class PharmacyPortal extends Component
             'stockInQuantity', 'stockInPrice', 'stockInSalesPrice', 'vendor_name',
             'stockInUnitsPerStrip', 'stockInLocationSection', 'stockInLocationColumn',
             'stockInSupplierId', 'stockInBillNumber', 'stockInPaymentMode', 'stockInPaidAmount',
-            'editingBatchId',
+            'editingBatchId', 'stockInFreeQuantity', 'batch_free_quantity',
         ]);
         $this->adjustmentType = 'add';
         $this->resetValidation();
@@ -208,7 +212,8 @@ class PharmacyPortal extends Component
         $medicine = Medicine::findOrFail($this->selectedMedicineId);
 
         $unitsPerStrip = max(1, $this->stockInUnitsPerStrip);
-        $totalUnits = $this->stockInQuantity * $unitsPerStrip;
+        $freeQty = $this->stockInFreeQuantity ?: 0;
+        $totalUnits = ($this->stockInQuantity + $freeQty) * $unitsPerStrip;
 
         $perUnitPurchasePrice = $this->stockInPrice ? ($this->stockInPrice / $unitsPerStrip) : 0;
         $perUnitSalesPrice = $this->stockInSalesPrice ? ($this->stockInSalesPrice / $unitsPerStrip) : 0;
@@ -315,7 +320,7 @@ class PharmacyPortal extends Component
         $this->editingBatchId = null;
         $this->reset([
             'batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'batch_vendor_name',
-            'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount'
+            'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount', 'batch_free_quantity'
         ]);
         $this->resetValidation();
     }
@@ -348,6 +353,9 @@ class PharmacyPortal extends Component
         $perUnitPurchasePrice = $this->batch_purchase_price ? ($this->batch_purchase_price / $unitsPerStrip) : 0;
         $perUnitSalesPrice = $this->batch_sales_price ? ($this->batch_sales_price / $unitsPerStrip) : 0;
 
+        $freeQty = $this->batch_free_quantity ?: 0;
+        $totalQuantity = $this->batch_quantity + $freeQty;
+
         if ($this->editingBatchId) {
             $batch = MedicineBatch::where('medicine_id', $medicine->id)->findOrFail($this->editingBatchId);
 
@@ -364,7 +372,7 @@ class PharmacyPortal extends Component
             $batch->update([
                 'batch_no'       => $this->batch_no,
                 'expiry_date'    => $this->batch_expiry_date,
-                'quantity'       => $this->batch_quantity,
+                'quantity'       => $totalQuantity,
                 'purchase_price' => $perUnitPurchasePrice,
                 'sales_price'    => $perUnitSalesPrice,
                 'vendor_name'    => $this->batch_vendor_name,
@@ -403,7 +411,7 @@ class PharmacyPortal extends Component
                 ->first();
 
             if ($existingBatch) {
-                $existingBatch->quantity += $this->batch_quantity;
+                $existingBatch->quantity += $totalQuantity;
                 if ($this->batch_purchase_price !== null && $this->batch_purchase_price !== '') {
                     $existingBatch->purchase_price = $perUnitPurchasePrice;
                 }
@@ -423,7 +431,7 @@ class PharmacyPortal extends Component
                     'medicine_id'    => $medicine->id,
                     'batch_no'       => $this->batch_no,
                     'expiry_date'    => $this->batch_expiry_date,
-                    'quantity'       => $this->batch_quantity,
+                    'quantity'       => $totalQuantity,
                     'purchase_price' => $perUnitPurchasePrice,
                     'sales_price'    => $perUnitSalesPrice,
                     'reorder_point'  => $medicine->reorder_point ?? 10,
@@ -444,7 +452,7 @@ class PharmacyPortal extends Component
         $savedMedId = $this->medId;
         $this->reset([
             'batch_no', 'batch_expiry_date', 'batch_quantity', 'batch_purchase_price', 'batch_sales_price', 'batch_vendor_name',
-            'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount', 'editingBatchId'
+            'batch_supplier_id', 'batch_bill_number', 'batch_payment_mode', 'batch_paid_amount', 'editingBatchId', 'batch_free_quantity'
         ]);
         $this->medId = $savedMedId;
         $this->resetValidation();
@@ -502,11 +510,31 @@ class PharmacyPortal extends Component
     }
 
     // ─────────────────────────────────────────────
+    // PAGINATION
+    // ─────────────────────────────────────────────
+    public function updatedSearchSalt()
+    {
+        $this->currentPage = 1;
+    }
+
+    public function nextPage()
+    {
+        $this->currentPage++;
+    }
+
+    public function prevPage()
+    {
+        if ($this->currentPage > 1) {
+            $this->currentPage--;
+        }
+    }
+
+    // ─────────────────────────────────────────────
     // RENDER
     // ─────────────────────────────────────────────
     public function render()
     {
-        $medicines = Medicine::with(['batches' => function ($q) {
+        $allMedicines = Medicine::with(['batches' => function ($q) {
                 $q->orderBy('expiry_date', 'asc');
             }])
             ->when($this->searchSalt !== '', function ($q) {
@@ -518,9 +546,18 @@ class PharmacyPortal extends Component
             })
             ->get();
 
-        $lowStockMedicines = $medicines->filter(fn($m) =>
+        $lowStockMedicines = $allMedicines->filter(fn($m) =>
             $m->total_stock <= $m->reorder_point
         );
+
+        $totalRecords = $allMedicines->count();
+        $totalPages = max(1, (int)ceil($totalRecords / $this->perPage));
+        
+        if ($this->currentPage > $totalPages) {
+            $this->currentPage = $totalPages;
+        }
+
+        $medicines = $allMedicines->slice(($this->currentPage - 1) * $this->perPage, $this->perPage);
 
         $expiryBatches = MedicineBatch::where('store_id', auth()->user()->store_id)
             ->whereBetween('expiry_date', [now(), now()->addDays(90)])
@@ -535,6 +572,8 @@ class PharmacyPortal extends Component
                 ? MedicineBatch::where('medicine_id', $this->medId)->orderBy('expiry_date')->get()
                 : collect(),
             'suppliers'       => Supplier::orderBy('name')->get(),
+            'totalRecords'    => $totalRecords,
+            'totalPages'      => $totalPages,
         ]);
     }
 }

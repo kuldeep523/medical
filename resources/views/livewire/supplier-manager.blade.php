@@ -187,7 +187,7 @@
                     @error('unitsPerStrip') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-1">
-                    <label class="erp-label">QTY ({{ $selUnits > 1 ? 'strips' : 'units' }})</label>
+                    <label class="erp-label">PAID QTY</label>
                     <input type="number" wire:model="qty" class="form-control form-control-sm rounded-0 erp-input" />
                     @error('qty') <div class="erp-error">{{ $message }}</div> @enderror
                 </div>
@@ -213,6 +213,11 @@
                 </div>
             </div>
             <div class="row g-1 align-items-end mt-1">
+                <div class="col-md-1">
+                    <label class="erp-label">FREE QTY</label>
+                    <input type="number" wire:model="freeQty" class="form-control form-control-sm rounded-0 erp-input" min="0" placeholder="0" />
+                    @error('freeQty') <div class="erp-error">{{ $message }}</div> @enderror
+                </div>
                 <div class="col-md-2">
                     <label class="erp-label">LOC SECTION</label>
                     <input type="text" wire:model="locSection" class="form-control form-control-sm rounded-0 erp-input" />
@@ -234,7 +239,8 @@
                         <th>ITEM DESCRIPTION</th>
                         <th>BATCH</th>
                         <th>EXPIRY</th>
-                        <th>QTY</th>
+                        <th>PAID QTY</th>
+                        <th>FREE QTY</th>
                         <th>PRICE</th>
                         <th>DIS %</th>
                         <th>GST %</th>
@@ -249,6 +255,7 @@
                             <td>{{ $item['batch_no'] }}</td>
                             <td>{{ date('d-m-Y', strtotime($item['expiry_date'])) }}</td>
                             <td>{{ $item['quantity'] }} {{ ($item['units_per_strip'] ?? 1) > 1 ? 'strips' : 'units' }}</td>
+                            <td class="text-success fw-bold">{{ $item['free_quantity'] ?? 0 }}</td>
                             <td>
                                 ₹{{ number_format($item['purchase_price'], 2) }}
                                 @if(($item['units_per_strip'] ?? 1) > 1)

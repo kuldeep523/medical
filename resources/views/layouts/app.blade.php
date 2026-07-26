@@ -101,6 +101,8 @@
             <a href="{{ route('accounting.index', ['tab' => 'sales_book']) }}" class="sidebar-btn {{ request()->query('tab') === 'sales_book' ? 'active' : '' }}">Bill Tagging</a>
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Daily Analysis (MIS)</a>
             <a href="{{ route('accounting.index', ['tab' => 'mis_dashboard']) }}" class="sidebar-btn {{ request()->query('tab') === 'mis_dashboard' ? 'active' : '' }}">Todays Gross Profit</a>
+            <a href="{{ route('dump-stock.index') }}" class="sidebar-btn {{ request()->routeIs('dump-stock.index') ? 'active' : '' }}">Dump Stock</a>
+            <a href="{{ route('reminders.index') }}" class="sidebar-btn {{ request()->routeIs('reminders.index') ? 'active' : '' }}">Reminders (Refill)</a>
             <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="sidebar-btn text-danger mt-auto">Exit</a>
         </div>
         @endif
